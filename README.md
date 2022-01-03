@@ -6,7 +6,7 @@
 
 ## Использование
 
-### Скачиваем **__[Node.js]__**(https://nodejs.org/en/download/).
+### Скачиваем  [**__Node.js__**](https://nodejs.org/en/download/).
 ### Скачиваем [Visual Studio Code](https://code.visualstudio.com/?wt.mc_id=vscom_downloads).
 ### Скачиваем архив.
 ### Запускаем Visual Studio.
