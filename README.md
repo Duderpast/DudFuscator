@@ -1,6 +1,6 @@
 
 
-# SFuscator
+# DudFuscator
 
 **Паста с Боронида by Duder#1827 но кого это волнует.**
 
@@ -10,4 +10,4 @@
 ### Скачиваем [Visual Studio Code](https://code.visualstudio.com/?wt.mc_id=vscom_downloads).
 ### Скачиваем архив.
 ### Запускаем Visual Studio.
-### Запускаем файл run.js и наслаждаемся
+### Запускаем файл run.js и наслаждаемся.
