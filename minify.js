@@ -9,7 +9,17 @@
 // I tried to copy+paste all comments, but no. I got bored.
 // Be happy.
 
-const print = console.log
+let quotes = require('./SunTzu.json').quotes
+const date = new Date()
+
+let debug = false;
+let lastTime = null;//new Date().getTime();
+const print = debug ? x => {
+    let newT = new Date().getTime()
+    let diff = newT - (lastTime === null ? newT : lastTime)
+    lastTime = newT
+    console.log(`| ms since l.p.`, diff, `| :`, x)
+} : () => null;
 const assert = function(a,b) {
     if (!a) {
         throw b
@@ -50,7 +60,7 @@ let Main_CharacterForEscape = {
 }
 
 const CharacterForEscape = new Proxy(Main_CharacterForEscape, { 
-    get(a, b) { return parseFloat(b) }
+    get(_, x) { return parseFloat(x) }
 })
 
 let AllIdentStartChars = [
@@ -192,40 +202,6 @@ let BinaryPriority = {
 let UnaryPriority = 8
 // Eof, Ident, KeyWord, Number, String, Symbol
 
-let uglyNames = []
-let l = 0
-let SHitA = ['x', 'X', 'y', 'Y', 'z', 'Z', '_']
-let SHitB = ['b', 'B', 'u', 'U', 'o', 'O', '_']
-function generateUglyName(l = 20) {
-    function OwOIfy(str) {
-        return str.split('').map(v=>{
-            let c = Math.round(Math.random())
-            if (c && v.toLowerCase() !== 'w') return v.toUpperCase();
-            return v;
-        }).join('')
-
-    }
-    let vars = SHitA // UGLY
-
-    function gen() {
-        let a = ""
-        for (let i = 0; i<=l; i++) {
-            let num = Math.floor(Math.random() * vars.length)
-            a+= num !== 3? OwOIfy(vars[num]) : vars[num]
-        }
-        return a
-    }
-
-    let gamer = gen()
-    while (uglyNames.includes(gamer))
-        gamer = gen();
-
-    uglyNames.push(gamer)
-
-    return gamer
-}
-
-
 function CreateLuaTokenStream(text) {
     // Tracking for the current position in the buffer, and
     // the current line / character we are on
@@ -285,15 +261,15 @@ function CreateLuaTokenStream(text) {
                 error("Unfinished long string.")
             } else if(c == ']') {
                 let done = true // Until contested
-                let i;
-                for (i=1; i<=eqcount; i++) {
-                    if (look() == '=') {
-                        p++
-                    } else {
-                        done = false
-                        break
-                    }
+                let startp = p
+                while (look() == '=') {
+                    p++
                 }
+                if (look() == '[') {
+                    p++
+                    return p - startp - 1
+                }
+
                 if (done && get() == ']') {
                     return
                 }
@@ -340,9 +316,9 @@ function CreateLuaTokenStream(text) {
             }
         }
         let tk = {
-            'Type': type,
-            'LeadingWhite': text.substr(whiteStart, (tokenStart - whiteStart)),
-            'Source': src
+            Type: type,
+            //LeadingWhite: text.substr(whiteStart, (tokenStart - whiteStart)),
+            Source: src
         }
         if (ntype !== null) {
             tk.NType = ntype
@@ -355,6 +331,8 @@ function CreateLuaTokenStream(text) {
     }
 
     // Parse tokens loop
+
+    print("Lexing tokens")
     while (true) {
         // Mark the whitespace start
         whiteStart = p
@@ -420,6 +398,7 @@ function CreateLuaTokenStream(text) {
             
             while (true) {
                 let c2 = get()
+
                 if (c2 == '\\') {
                     let c3 = get()
                     if (Digits.includes(c3)) {
@@ -496,6 +475,7 @@ function CreateLuaTokenStream(text) {
             // Symbol or Long String
             let eqCount = getopen()
             if (eqCount != null) {
+                print("longdata")
                 // Long String
                 longdata(eqCount)
                 token("String")
@@ -528,6 +508,7 @@ function CreateLuaTokenStream(text) {
             throw(`Bad symbol \`${c1}\` in source. ${p}`)
         }
     }
+    print("Finished parsing tokens")
 
     return tokenBuffer
 }
@@ -537,6 +518,7 @@ function CreateLuaTokenStream(text) {
 
 function CreateLuaParser(text) {
     // Token stream and pointer into it
+    print("Creating tokens stream")
     let tokens = CreateLuaTokenStream(text)
 
     let p = 0
@@ -560,12 +542,11 @@ function CreateLuaParser(text) {
             let tk = tokens[tkNum]
             let text
             if (tk == token) {
-                text = tk.LeadingWhite
+                text = ' '
             } else {
-                text = tk.LeadingWhite + tk.Source
+                text = ' ' + tk.Source
             }
 
-            let i
             for (i=0; i<=text.length; i++) {
                 let c = text.substr(i, 1)
                 if (c == '\n') {
@@ -644,21 +625,21 @@ function CreateLuaParser(text) {
     let block
     let expr
 
-    function exprlist(locals, upvals) {
-        let exprList = [expr(locals, upvals)]
+    function exprlist() {
+        let exprList = [expr()]
         let commaList = []
         while (peek().Source == ",") {
             commaList.push(get())
-            exprList.push(expr(locals, upvals))
+            exprList.push(expr())
         }
         return [exprList, commaList]
     }
 
-    function prefixexpr(locals, upvals) {
+    function prefixexpr() {
         let tk = peek()
         if (tk.Source == '(') {
             let oparenTk = get()
-            let inner = expr(locals, upvals)
+            let inner = expr()
             let cparenTk = expect('Symbol', ')')
             let node
             node = MkNode({
@@ -679,13 +660,13 @@ function CreateLuaParser(text) {
                 'GetLastToken': () => node.Token,
             })
 
-            if (locals[node.Token.Source] != null) {
+            /*if (locals[node.Token.Source] != null) {
                 locals[node.Token.Source].Tokens.push(node.Token)
                 locals[node.Token.Source].UseCountIncrease()
             } else if(upvals[node.Token.Source] != null) {
                 upvals[node.Token.Source].Tokens.push(node.Token)
                 upvals[node.Token.Source].UseCountIncrease()
-            }
+            }*/
 
             return node
         } else {
@@ -695,25 +676,18 @@ function CreateLuaParser(text) {
         }
     }
 
-    function tableexpr(locals, upvals) {
+    function tableexpr() {
         let obrace = expect("Symbol", "{")
         let entries = []
         let seperators = []
-        let length = 0
-
-        let lastIndex
-
-        let valLen = 0
         while (peek().Source != "}") {
-            let indx
-            let val
             if (peek().Source == '[') {
                 // Index
                 let obrac = get()
-                let index = expr(locals, upvals)
+                let index = expr()
                 let cbrac = expect("Symbol", "]")
                 let eq = expect("Symbol", "=")
-                let value = expr(locals, upvals)
+                let value = expr()
 
                 indx = index.Token && index.Token.Source
                 val = value
@@ -730,7 +704,7 @@ function CreateLuaParser(text) {
                 // Field
                 let field = get()
                 let eq = get()
-                let value = expr(locals, upvals)
+                let value = expr()
                 
                 indx = field
                 val = value
@@ -743,7 +717,7 @@ function CreateLuaParser(text) {
             } else {
                 // Value
         
-                let value = expr(locals, upvals)
+                let value = expr()
                 entries.push({
                     "EntryType": "Value",
                     "Value": value,
@@ -792,8 +766,8 @@ function CreateLuaParser(text) {
         return [varList, commaList]
     }
 
-    function blockbody(terminator, locals, upvals) {
-        let body = block(locals, upvals)
+    function blockbody(terminator, ) {
+        let body = block()
         let after = peek()
         if (after.Type == "Keyword" && after.Source == terminator) {
             get()
@@ -804,7 +778,7 @@ function CreateLuaParser(text) {
         }
     }
 
-    function funcdecl(isAnonymous, locals, upvals, local) {
+    function funcdecl(isAnonymous, local) {
         let functionKw = get()
 
         let nameChain
@@ -832,7 +806,7 @@ function CreateLuaParser(text) {
 
         let [argList, argCommaList, vargToken] = varlist(true)
         let cparenTk = expect("Symbol", ")")
-        let [fbody, enTk] = blockbody("end", locals, upvals)
+        let [fbody, enTk] = blockbody("end", )
 
         let node
         node = MkNode({
@@ -854,14 +828,14 @@ function CreateLuaParser(text) {
         return node
     }
 
-    function functionargs(locals, upvals) {
+    function functionargs() {
         let tk = peek()
         if (tk.Source == "(") {
             let oparenTk = get()
             let argList = []
             let argCommaList = []
             while (peek().Source != ")") {
-                argList.push(expr(locals, upvals))
+                argList.push(expr())
                 if (peek().Source == ",") {
                     argCommaList.push(get())
                 } else {
@@ -886,7 +860,7 @@ function CreateLuaParser(text) {
             let node
             node = MkNode({
                 "CallType": "TableCall",
-                "TableExpr": expr(locals, upvals),
+                "TableExpr": expr(),
                 "GetFirstToken": () => node.TableExpr.GetFirstToken(),
                 "GetLastToken": () => node.TableExpr.GetLastToken(),
             })
@@ -906,8 +880,8 @@ function CreateLuaParser(text) {
     }
 
 
-    function primaryexpr(locals, upvals) {
-        let base = prefixexpr(locals, upvals)
+    function primaryexpr() {
+        let base = prefixexpr()
         assert(base, "nil prefixexpr")
 
         while (true) {
@@ -929,7 +903,7 @@ function CreateLuaParser(text) {
             } else if(tk.Source == ":") {
                 let colonTk = get()
                 let methodName = expect("Ident")
-                let fargs = functionargs(locals, upvals)
+                let fargs = functionargs()
                 let node
                 node = MkNode({
                     "Type": "MethodExpr",
@@ -943,7 +917,7 @@ function CreateLuaParser(text) {
                 base = node
             } else if(tk.Source == "[") {
                 let obrac = get()
-                let index = expr(locals, upvals)
+                let index = expr()
                 let cbrac = expect("Symbol", "]")
                 let node
                 node = MkNode({
@@ -961,14 +935,14 @@ function CreateLuaParser(text) {
                 node = MkNode({
                     "Type": "CallExpr",
                     "Base": base,
-                    "FunctionArguments": functionargs(locals, upvals),
+                    "FunctionArguments": functionargs(),
                     "GetFirstToken": () => node.Base.GetFirstToken(),
                     "GetLastToken": () => node.FunctionArguments.GetLastToken(),
                 })
                 base = node
             } else if(Compounds.includes(tk.Source)) {
                 let compoundTk = get()
-                let rhsExpr = expr(locals, upvals)
+                let rhsExpr = expr()
 
                 let node
                 node = MkNode({
@@ -987,7 +961,7 @@ function CreateLuaParser(text) {
         }
     }
 
-    function simpleexpr(locals, upvals) {
+    function simpleexpr() {
         let tk = peek()
         if (tk.Type == "Number") {
             let node
@@ -1036,19 +1010,19 @@ function CreateLuaParser(text) {
             })
             return node
         } else if(tk.Source == "{") {
-            return tableexpr(locals, upvals)
+            return tableexpr()
         } else if(tk.Source == "function") {
-            return funcdecl(true, locals, upvals)
+            return funcdecl(true, )
         } else {
-            return primaryexpr(locals, upvals)
+            return primaryexpr()
         }
     }
 
-    function subexpr(limit, locals, upvals) {
+    function subexpr(limit, ) {
         let curNode
         if (isUnop()) {
             let opTk = get()
-            let ex = subexpr(UnaryPriority, locals, upvals)
+            let ex = subexpr(UnaryPriority, )
             let node
             node = MkNode({
                 "Type": "UnopExpr",
@@ -1059,13 +1033,13 @@ function CreateLuaParser(text) {
             })
             curNode = node
         } else {
-            curNode = simpleexpr(locals, upvals)
+            curNode = simpleexpr()
             assert(curNode, "nil sipleexpr")
         }  
     
         while (isBinop() && BinaryPriority[peek().Source] != undefined && BinaryPriority[peek().Source][0] > limit) {
             let opTk = get()
-            let rhs = subexpr(BinaryPriority[opTk.Source][1], locals, upvals)
+            let rhs = subexpr(BinaryPriority[opTk.Source][1], )
             assert(rhs, "RhsNeeded")
             let node
             node = MkNode({
@@ -1081,10 +1055,10 @@ function CreateLuaParser(text) {
         return curNode
     }
 
-    expr = (locals, upvals) => subexpr(0, locals, upvals)
+    expr = () => subexpr(0, )
 
-    function exprstat(locals, upvals) {
-        let ex = primaryexpr(locals, upvals)
+    function exprstat() {
+        let ex = primaryexpr()
 
         if (ex.Type == "MethodExpr" || ex.Type == "CallExpr") {
             let node
@@ -1102,18 +1076,18 @@ function CreateLuaParser(text) {
             let lhsSeperator = []
             while (peek().Source == ",") {
                 lhsSeperator.push(get())
-                let lhsPart = primaryexpr(locals, upvals)
+                let lhsPart = primaryexpr()
                 if (lhsPart.Type == "MethodExpr" || lhsPart.Type == "CallExpr") {
                     throw "Bad left hand side of asignment"
                 }
                 lhs.push(lhsPart)
             }
             let eq = expect("Symbol", "=")
-            let rhs = [expr(locals, upvals)]
+            let rhs = [expr()]
             let rhsSeperator = []
             while (peek().Source == ",") {
                 rhsSeperator.push(get())
-                rhs.push(expr(locals, upvals))
+                rhs.push(expr())
             }
 
             let node
@@ -1132,21 +1106,21 @@ function CreateLuaParser(text) {
         }
     }
 
-    function ifstat(locals, upvals) {
+    function ifstat() {
         let ifKw = get()
-        let condition = expr(locals, upvals)
+        let condition = expr()
         let thenKw = expect("Keyword", "then")
-        let ifBody = block(locals, upvals)
+        let ifBody = block()
         let elseClauses = []
         while (peek().Source == "elseif" || peek().Source == "else") {
             let elseifKw = get()
             let elseifCondition
             let elseifThenKw
             if (elseifKw.Source == "elseif") {
-                elseifCondition = expr(locals, upvals)
+                elseifCondition = expr()
                 elseifThenKw = expect("Keyword", "then")
             }
-            let elseifBody = block(locals, upvals)
+            let elseifBody = block()
             elseClauses.push({
                 "Condition": elseifCondition,
                 "Body": elseifBody,
@@ -1177,9 +1151,9 @@ function CreateLuaParser(text) {
     }
 
 
-    function dostat(locals, upvals) {
+    function dostat() {
         let doKw = get()
-        let [body, enKw] = blockbody("end", locals, upvals)
+        let [body, enKw] = blockbody("end", )
         
         let node
         node = MkNode({
@@ -1194,11 +1168,11 @@ function CreateLuaParser(text) {
         return node
     }
 
-    function whilestat(locals, upvals) {
+    function whilestat() {
         let whileKw = get()
-        let condition = expr(locals, upvals)
+        let condition = expr()
         let doKw = expect("Keyword", "do")
-        let [body, enKw] = blockbody("end", locals, upvals)
+        let [body, enKw] = blockbody("end", )
 
         let node
         node = MkNode({
@@ -1215,18 +1189,18 @@ function CreateLuaParser(text) {
         return node
     }
 
-    function forstat(locals, upvals) {
+    function forstat() {
         let forKw = get()
         let [loopVars, loopVarCommas] = varlist()
         let node = []
         if (peek().Source == "=") {
             let eqTk = get()
-            let [exprList, exprCommaList] = exprlist(locals, upvals)
+            let [exprList, exprCommaList] = exprlist()
             if (exprList.length < 2 || exprList.length > 3) {
                 throw "Expected 2 or 3 values for range bounds"
             }
             let doTk = expect("Keyword", "do")
-            let [body, enTk] = blockbody("end", locals, upvals)
+            let [body, enTk] = blockbody("end", )
             let node
             node = MkNode({
                 "Type": "NumericForStat",
@@ -1246,9 +1220,9 @@ function CreateLuaParser(text) {
             return node
         } else if(peek().Source == "in") {
             let inTk = get()
-            let [exprList, exprCommaList] = exprlist(locals, upvals)
+            let [exprList, exprCommaList] = exprlist()
             let doTk = expect("Keyword", "do")
-            let [body, enTk] = blockbody("end", locals, upvals)
+            let [body, enTk] = blockbody("end", )
             let node
             node = MkNode({
                 "Type": "GenericForStat",
@@ -1269,10 +1243,10 @@ function CreateLuaParser(text) {
         }
     }
 
-    function repeatstat(locals, upvals) {
+    function repeatstat() {
         let repeatKw = get()
         let [body, untilTk] = blockbody("until", locals)
-        let condition = expr(locals, upvals)
+        let condition = expr()
 
         let node
         node = MkNode({
@@ -1288,10 +1262,10 @@ function CreateLuaParser(text) {
         return node
     }
 
-    function localdecl(locals, upvals) {
+    function localdecl() {
         let localKw = get()
         if (peek().Source == "function") {
-            let funcStat = funcdecl(false, locals, upvals, true)
+            let funcStat = funcdecl(false, true)
             if (funcStat.NameChain.length > 1) {
                 throw getTokenStartPosition(funcStat.Token_NameChainSeperator[0]) + ": `(` expected."
             }
@@ -1312,7 +1286,7 @@ function CreateLuaParser(text) {
             let eqToken
             if (peek().Source == "=") {
                 eqToken = get()
-                let [exprList1, exprCommaList1] = exprlist(locals, upvals)
+                let [exprList1, exprCommaList1] = exprlist()
                 exprList = exprList1
                 exprCommaList = exprCommaList1
             }
@@ -1342,7 +1316,7 @@ function CreateLuaParser(text) {
         }
     }
 
-    function retstat(locals, upvals) {
+    function retstat() {
         let returnKw = get()
         let exprList
         let commaList
@@ -1350,7 +1324,7 @@ function CreateLuaParser(text) {
             exprList = []
             commaList = []
         } else {
-            [exprList, commaList] = exprlist(locals, upvals)
+            [exprList, commaList] = exprlist()
         }
         let self
         self = {
@@ -1370,7 +1344,7 @@ function CreateLuaParser(text) {
         return self
     }
 
-    function breakstat(locals, upvals) {
+    function breakstat() {
         let breakKw = get()
         let self
         self = {
@@ -1382,7 +1356,7 @@ function CreateLuaParser(text) {
         return self
     }
 
-    function continuestat(locals, upvals) {
+    function continuestat() {
         let continueKw = get()
         let self
         self = {
@@ -1394,30 +1368,30 @@ function CreateLuaParser(text) {
         return self
     }
 
-    function statement(locals, upvals) {
+    function statement() {
         let tok = peek()
         if (tok.Source == "if") {
-            return [false, ifstat(locals, upvals)]
+            return [false, ifstat()]
         } else if(tok.Source == "while") {
-            return [false, whilestat(locals, upvals)]
+            return [false, whilestat()]
         } else if(tok.Source == "do") {
-            return [false, dostat(locals, upvals)]
+            return [false, dostat()]
         } else if(tok.Source == "for") {
-            return [false, forstat(locals, upvals)]
+            return [false, forstat()]
         } else if(tok.Source == "repeat") {
-            return [false, repeatstat(locals, upvals)]
+            return [false, repeatstat()]
         } else if(tok.Source == "function") {
-            return [false, funcdecl(false, locals, upvals)]
+            return [false, funcdecl(false, )]
         } else if(tok.Source == "local") {
-            return [false, localdecl(locals, upvals)]
+            return [false, localdecl()]
         } else if(tok.Source == "return") {
-            return [true, retstat(locals, upvals)]
+            return [true, retstat()]
         } else if(tok.Source == "break") {
-            return [true, breakstat(locals, upvals)]
+            return [true, breakstat()]
         } else if(tok.Source == "continue") {
-            return [true, continuestat(locals, upvals)]
+            return [true, continuestat()]
         } else {
-            return [false, exprstat(locals, upvals)]
+            return [false, exprstat()]
         }
     }
 
@@ -1451,7 +1425,8 @@ function CreateLuaParser(text) {
                 print(`INFINITE LOOP POSSIBLE ON STATEMENT ${thing.Source} :`,thing)
             }
             thing = peek()
-            let [isLast, stat] = statement(locals, upvals)
+            let [isL, stat] = statement()
+            isLast = isL
             if (stat) {
                 statements.push(stat);
 
@@ -1551,6 +1526,7 @@ function CreateLuaParser(text) {
         return node
     }
 
+    print("Parsing block")
     return block()
 }
 
@@ -2092,10 +2068,10 @@ function PrintAst(ast) {
     let printExpr
     let buffer = ''
     function printt(tk) {
-        if (tk.LeadingWhite == null || tk.Source == null) {
-            throw `Bad token: tk=${tk} | lwhite=${tk.LeadingWhite} | source=${tk.Source}`
+        if (tk.Source == null) {
+            throw `Bad token: tk=${tk} | source=${tk.Source}`
         }
-        buffer = `${buffer}${tk.LeadingWhite}${tk.Source}`
+        buffer += `${(typeof tk.LeadingWhite !== 'string' ? ' ' : tk.LeadingWhite)}${tk.Source}`
     }
 
     printExpr = function(expr) {
@@ -2389,413 +2365,32 @@ function PrintAst(ast) {
     return buffer
 }
 
-function FormatAst(ast) {
-    let formatStat
-    let formatExpr
-    let currentIndent = 0
-    function applyIndent(token) {
-        let indentString = `\n${"\t".repeat(currentIndent)}`
-        if (token.LeadingWhite == '' || (token.LeadingWhite.substr(-indentString.length, indentString.length) != indentString)) {
-            //token.LeadingWhite = token.LeadingWhite.replace("\n?[\t ]*$") /Remove all \n & \t at end of string
-            // idk string patterns in js :(
-
-            let newstr = ""
-            let i
-            let last
-            for (i=token.LeadingWhite.length; i>=0; i--) {
-                let cur = token.LeadingWhite.substr(i, 1)
-                if (cur == "" || cur.match(/\s/g)) {
-                } else {
-                    newstr = token.LeadingWhite.substr(0,i+1)
-                    break
-                }
-            }
-
-            token.LeadingWhite = `${newstr}${indentString}`
-        }
+function shuffleArray(array) {
+    var currentIndex = array.length,  randomIndex;
+  
+    // While there remain elements to shuffle...
+    while (0 !== currentIndex) {
+  
+      // Pick a remaining element...
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+  
+      // And swap it with the current element.
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex], array[currentIndex]];
     }
-
-    function indent() {
-        currentIndent++
-    }
-
-    function undent() {
-        currentIndent--
-        assert(currentIndent >= 0, "Undented too far")
-    }
-
-    function leadingChar(tk) {
-        if (tk.LeadingWhite.length > 0) {
-            return tk.LeadingWhite.substr(0,1)
-        } else {
-            return tk.Source.toString().substr(0,1)
-        }
-    }
-
-    function padToken(tk) {
-        if (!WhiteChars.includes(leadingChar(tk))) {
-            tk.LeadingWhite = ' ' + tk.LeadingWhite
-        }
-    }
-
-    function padExpr(expr) {
-        padToken(expr.GetFirstToken())
-    }
-
-    function formatBody(openToken, bodyStat, closeToken) {
-        indent()
-        formatStat(bodyStat)
-        undent()
-        applyIndent(closeToken)
-    }
-
-    formatExpr = function(expr) {
-        if (expr.Type == "BinopExpr") {
-            formatExpr(expr.Lhs)
-            formatExpr(expr.Rhs)
-            //if (expr.Token_Op.Source == "..") { // ayeaye
-            //    expr.Token_Op.LeadingWhite = " "
-             //   expr.Rhs.GetFirstToken.LeadingWhite = " "
-            //} else {
-                padExpr(expr.Rhs)
-                padToken(expr.Token_Op)
-            //}
-        } else if(expr.Type == "UnopExpr") {
-            formatExpr(expr.Rhs)
-        } else if(expr.Type == "NumberLiteral" || expr.Type == "StringLiteral"
-                || expr.Type == "NilLiteral" || expr.Type == "BooleanLiteral"
-                || expr.Type == "VargLiteral")
-        {
-            // no
-        } else if(expr.Type == "FieldExpr") {
-            formatExpr(expr.Base)
-        } else if(expr.Type == "IndexExpr") {
-            formatExpr(expr.Base)
-            formatExpr(expr.Index)
-        } else if(expr.Type == "MethodExpr" || expr.Type == "CallExpr") {
-            formatExpr(expr.Base)
-            if (expr.Type == "MethodExpr") {
-
-            }
-            if (expr.FunctionArguments.CallType == "StringCall") {
-
-            } else if(expr.FunctionArguments.CallType == "ArgCall") {
-                expr.FunctionArguments.ArgList.forEach((argExpr, index) => {
-                    formatExpr(argExpr)
-                    if (index > 0) {
-                        padExpr(argExpr)
-                    }
-                    let sep = expr.FunctionArguments.Token_CommaList[index]
-                     if (sep != null) {
-
-                    }
-                })
-
-            } else if(expr.FunctionArguments.CallType == "TableCall") {
-                formatExpr(expr.FunctionArguments.TableExpr)
-            }
-        } else if(expr.Type == "FunctionLiteral") {
-            expr.ArgList.forEach((arg, index) => {
-                if (index > 0) {
-                    padToken(arg)
-                }
-                let comma = expr.Token_ArgCommaList[index]
-                if (comma != null) {
-
-                }
-            })
-
-            if (expr.ArgList.length > 0 && expr.Token_Varg != null) {
-                padToken(expr.Token_Varg)
-            }
-            formatBody(expr.Token_CloseParen, expr.Body, expr.Token_End)
-        } else if(expr.Type == "VariableExpr") {
-            // no
-        } else if(expr.Type == "ParenExpr") {
-            formatExpr(expr.Expression)
-        } else if(expr.Type == "TableLiteral") {
-            if (expr.EntryList.length == 0) {
-
-            } else {
-                indent()
-
-                let die = 100
-                expr.EntryList.forEach((entry, index) => {
-                    if (entry.EntryType == "Field") {
-                        if (expr.EntryList.length > die) {
-                            StripAst(entry.Value)
-                        } else {
-                            applyIndent(entry.Field)
-                        }
-
-                        padToken(entry.Token_Equals)
-                        formatExpr(entry.Value)
-                        padExpr(entry.Value)
-                    } else if(entry.EntryType == "Index") {
-                        if (expr.EntryList.length > die)
-                            entry.Token_OpenBracket.LeadingWhite = ''
-                        else
-                            applyIndent(entry.Token_OpenBracket);
-
-                        formatExpr(entry.Index)
-
-                        padToken(entry.Token_Equals)
-                        formatExpr(entry.Value)
-                        padExpr(entry.Value)
-                    } else if(entry.EntryType == "Value") {
-                        formatExpr(entry.Value)
-
-                        if (expr.EntryList.length > die) {
-                            StripAst(entry.Value)
-                        } else {
-                            applyIndent(entry.Value.GetFirstToken())
-                        }
-                    } else {
-                        assert(false, "unreachable")
-                    }
-                    let sep = expr.Token_SeperatorList[index]
-                    if (sep != null) {
-                        if (expr.EntryList.length > die)
-                            sep.LeadingWhite = '';
-                    }
-                })
-                undent()
-                if (expr.EntryList.length > die) {
-                    expr.Token_CloseBrace.LeadingWhite = ''
-                } else {
-                    applyIndent(expr.Token_CloseBrace)
-                }
-            }
-        } else if(expr.Type == 'CompoundStat') {
-            formatStat(expr)
-        } else {
-            print(expr)
-            throw(`unreachable, type: ${expr.Type}:`+ expr)
-        }
-    }
-
-    formatStat = function(stat) {
-        if (stat.Type == "StatList") {
-            stat.StatementList.forEach((stat, index) => {
-                if (stat === null || stat.Type === null) {
-                    return
-                }
-
-                stat.Remove = () => {
-                    stat.StatementList[index] = null
-                }
-
-                formatStat(stat)
-                applyIndent(stat.GetFirstToken())
-            })
-        } else if(stat.Type == "BreakStat") {
-            // no
-        } else if(stat.Type == "ContinueStat") {
-            // fuck off
-        } else if(stat.Type == "ReturnStat") {
-            
-            stat.ExprList.forEach((expr, index) => {
-                formatExpr(expr)
-                padExpr(expr)
-                if (stat.Token_CommaList[index]) {
-
-                }
-            })
-        } else if(stat.Type == "LocalVarStat") {
-            stat.VarList.forEach((_var, index) => {
-                padToken(_var)
-                let comma = stat.Token_VarCommaList[index]
-                if (comma != null) {
-
-                }
-            })
-            if (stat.Token_Equals) {
-                padToken(stat.Token_Equals)
-
-                let newlist = []
-                let newcommalist = []
-                stat.ExprList.forEach((expr,index) => {
-                    if (expr != null) {
-                        if (index < stat.VarList.length) {
-                            newlist.push(expr)
-                            newcommalist.push(stat.Token_ExprCommaList[index])
-                        } else if (expr.Type == "CallExpr" || expr.Type == "ParenExpr" || expr.Type == "VargLiteral" || expr.Type == "BinopExpr" || expr.Type == "UnopExpr") {
-                            newlist.push(expr)
-                            newcommalist.push(stat.Token_ExprCommaList[index])
-                        }
-                    }
-                })
-
-                stat.ExprList = newlist
-                stat.CommaList = newcommalist
-
-                stat.ExprList.forEach((expr,index) => {
-                    if (expr != null) {
-                        formatExpr(expr)
-                        padExpr(expr)
-                        let comma = stat.Token_ExprCommaList[index]
-                        if (comma != null && stat.ExprList.length-1 == index) {
-                            stat.Token_ExprCommaList[index] = null
-                        }
-                    }
-                })
-            }
-        } else if(stat.Type == "LocalFunctionStat") {
-            padToken(stat.FunctionStat.Token_Function)
-            padToken(stat.FunctionStat.NameChain[0])
-
-            stat.FunctionStat.ArgList.forEach((arg, index) => {
-                if (index > 0) {
-                    padToken(arg)
-                }
-                let comma = stat.FunctionStat.Token_ArgCommaList[index]
-            })
-
-            if (stat.FunctionStat.ArgList.length > 0 && stat.FunctionStat.Token_Varg) {
-                padToken(stat.FunctionStat.Token_Varg)
-            }
-
-            formatBody(stat.FunctionStat.Token_CloseParen, stat.FunctionStat.Body, stat.FunctionStat.Token_End)
-        } else if(stat.Type == "FunctionStat") {
-            stat.NameChain.forEach((part, index) => {
-                if (index == 0) {
-                    padToken(part)
-                }
-                let sep = stat.Token_NameChainSeperator[index]
-                if (sep != null) {
-
-                }
-            })
-
-            stat.ArgList.forEach((arg, index) => {
-                if (index > 0) {
-                    padToken(arg)
-                }
-                let comma = stat.Token_ArgCommaList[index]
-                if (comma != null) {
-
-                }
-            })
-
-            if (stat.ArgList.length > 0 && stat.Token_Varg) {
-                padToken(stat.Token_Varg)
-            }
-
-            formatBody(stat.Token_CloseParen, stat.Body, stat.Token_End)
-        } else if(stat.Type == "RepeatStat") {
-            formatBody(stat.Token_Repeat, stat.Body, stat.Token_Until)
-            formatExpr(stat.Condition)
-            padExpr(stat.Condition)
-        } else if(stat.Type == "GenericForStat") {
-            stat.VarList.forEach((_var, index) => {
-                padToken(_var)
-                let sep = stat.Token_VarCommaList[index]
-                 if (sep != null) {
-
-                }
-            })
-            padToken(stat.Token_In)
-            stat.GeneratorList.forEach((expr, index) => {
-                formatExpr(expr)
-                padExpr(expr)
-                let sep = stat.Token_GeneratorCommaList[index]
-                 if (sep != null) {
-
-                }
-            })
-            padToken(stat.Token_Do)
-            formatBody(stat.Token_Do, stat.Body, stat.Token_End)
-        } else if(stat.Type == "NumericForStat") {
-            stat.VarList.forEach((_var, index) => {
-                padToken(_var)
-                let sep = stat.Token_VarCommaList[index]
-                 if (sep != null) {
-
-                }
-            })
-            padToken(stat.Token_Equals)
-            stat.RangeList.forEach((expr, index) => {
-                formatExpr(expr)
-                padExpr(expr)
-                let sep = stat.Token_RangeCommaList[index]
-                 if (sep != null) {
-
-                }
-            })
-            padToken(stat.Token_Do)
-            formatBody(stat.Token_Do, stat.Body, stat.Token_End)
-        } else if(stat.Type == "WhileStat") {
-            formatExpr(stat.Condition)
-            padExpr(stat.Condition)
-            padToken(stat.Token_Do)
-            formatBody(stat.Token_Do, stat.Body, stat.Token_End)
-        } else if(stat.Type == "DoStat") {
-            formatBody(stat.Token_Do, stat.Body, stat.Token_End)
-        } else if(stat.Type == "IfStat") {
-            formatExpr(stat.Condition)
-            padExpr(stat.Condition)
-            padToken(stat.Token_Then)
-
-            let lastBodyOpen = stat.Token_Then
-            let lastBody = stat.Body
-
-            stat.ElseClauseList.forEach((clause) => {
-                formatBody(lastBodyOpen, lastBody, clause.Token)
-                lastBodyOpen = clause.Token
-
-                if (clause.Condition != null) {
-                    formatExpr(clause.Condition)
-                    padExpr(clause.Condition)
-                    padToken(clause.Token_Then)
-                    lastBodyOpen = clause.Token_Then
-                }
-                lastBody = clause.Body
-            })
-
-            formatBody(lastBodyOpen, lastBody, stat.Token_End)
-        } else if(stat.Type == "CallExprStat") {
-            formatExpr(stat.Expression)
-        } else if(stat.Type == "CompoundStat") {
-            formatExpr(stat.Lhs)
-            formatExpr(stat.Rhs)
-
-            padExpr(stat.Lhs)
-            padExpr(stat.Rhs)
-            padToken(stat.Token_Compound)
-        } else if(stat.Type == "AssignmentStat") {
-            stat.Lhs.forEach((ex, index) => {
-                formatExpr(ex)
-                if (index > 0) {
-                    padExpr(ex)
-                }
-                let sep = stat.Token_LhsSeperatorList[index]
-                 if (sep != null) {
-
-                }
-            })
-            padToken(stat.Token_Equals)
-            stat.Rhs.forEach((ex, index) => {
-                formatExpr(ex)
-                padExpr(ex)
-                let sep = stat.Token_RhsSeperatorList[index]
-                 if (sep != null) {
-
-                }
-            })
-        } else {
-            assert(false, "Unreachable")
-        }
-    }
-
-    formatStat(ast)
+  
+    return array;
 }
 
 function StripAst(ast) {
+    quotes = shuffleArray(quotes)
     let stripStat
     let stripExpr
     function stript(token) {
         token.LeadingWhite = ''
     }
+
     function joint(tokenA, tokenB, shit = false) {
         stript(tokenB)
 
@@ -2810,7 +2405,8 @@ function StripAst(ast) {
     }
 
     function bodyjoint(open, body, close) {
-        stripStat(body)
+
+        //stripStat(body) // This slow
         stript(close)
         let bodyFirst = body.GetFirstToken()
         let bodyLast = body.GetLastToken()
@@ -2824,6 +2420,7 @@ function StripAst(ast) {
     }
 
     stripExpr = function(expr) {
+        //print(expr.Type)
         if (expr.Type == "BinopExpr") {
             stripExpr(expr.Lhs)
             stript(expr.Token_Op)
@@ -2840,9 +2437,20 @@ function StripAst(ast) {
                 || expr.Type == "NilLiteral" || expr.Type == "BooleanLiteral"
                 || expr.Type == "VargLiteral")
         {
+            if (expr.Type == 'NumberLiteral') {
+                if (Math.random() > 0.5 && !(expr.Token.Source.search(/\./) > -1) && parseInt(expr.Token.Source) < 40 && parseInt(expr.Token.Source) > 0) {
+                    let n = parseInt(expr.Token.Source)
+                    let quot = quotes[quotes.length * Math.random() | 0]
+                    expr.Type = 'StringLiteral'
+                    expr.Token.Type = 'String'
+                    if (Math.random() > .6)
+                        expr.Token.Source = `((function(A) return (#A - ${quot.length - n}) end)('${quot}'))`
+                    else
+                        expr.Token.Source = `(#('${quot}') - ${quot.length - n})`
+                    
+                }
+            }
             stript(expr.Token)
-
-
         } else if(expr.Type == "FieldExpr") {
             stripExpr(expr.Base)
             stript(expr.Token_Dot)
@@ -2887,6 +2495,7 @@ function StripAst(ast) {
                 stript(expr.Token_Varg)
             }
             stript(expr.Token_CloseParen)
+            stripStat(expr.Body)
             bodyjoint(expr.Token_CloseParen, expr.Body, expr.Token_End)
         } else if(expr.Type == "VariableExpr") {
             stript(expr.Token)
@@ -3008,6 +2617,7 @@ function StripAst(ast) {
                 stript(stat.FunctionStat.Token_Varg)
             }
             stript(stat.FunctionStat.Token_CloseParen)
+            stripStat(stat.FunctionStat.Body)
             bodyjoint(stat.FunctionStat.Token_CloseParen, stat.FunctionStat.Body, stat.FunctionStat.Token_End)
         } else if(stat.Type == "FunctionStat") {
             stript(stat.Token_Function)
@@ -3035,9 +2645,11 @@ function StripAst(ast) {
                 stript(stat.Token_Varg)
             }
             stript(stat.Token_CloseParen)
+            stripStat(stat.Body)
             bodyjoint(stat.Token_CloseParen, stat.Body, stat.Token_End)
         } else if(stat.Type == "RepeatStat") {
             stript(stat.Token_Repeat)
+            stripStat(stat.Body)
             bodyjoint(stat.Token_Repeat, stat.Body, stat.Token_Until)
             stripExpr(stat.Condition)
             joint(stat.Token_Until, stat.Condition.GetFirstToken())
@@ -3066,6 +2678,7 @@ function StripAst(ast) {
                 }
             })
             joint(stat.GeneratorList[stat.GeneratorList.length-1].GetLastToken(), stat.Token_Do)
+            stripStat(stat.Body)
             bodyjoint(stat.Token_Do, stat.Body, stat.Token_End)
         } else if(stat.Type == "NumericForStat") {
             stript(stat.Token_For)
@@ -3092,6 +2705,7 @@ function StripAst(ast) {
                 }
             })
             joint(stat.RangeList[stat.RangeList.length-1].GetLastToken(), stat.Token_Do)
+            stripStat(stat.Body)
             bodyjoint(stat.Token_Do, stat.Body, stat.Token_End)
         } else if(stat.Type == "WhileStat") {
             stript(stat.Token_While)
@@ -3099,10 +2713,12 @@ function StripAst(ast) {
             stript(stat.Token_Do)
             joint(stat.Token_While, stat.Condition.GetFirstToken())
             joint(stat.Condition.GetLastToken(), stat.Token_Do)
+            stripStat(stat.Body)
             bodyjoint(stat.Token_Do, stat.Body, stat.Token_End)
         } else if(stat.Type == "DoStat") {
             stript(stat.Token_Do)
             stript(stat.Token_End)
+            stripStat(stat.Body)
             bodyjoint(stat.Token_Do, stat.Body, stat.Token_End)
         } else if(stat.Type == "IfStat") {
             stript(stat.Token_If)
@@ -3113,7 +2729,9 @@ function StripAst(ast) {
             let lastBodyOpen = stat.Token_Then
             let lastBody = stat.Body
 
+            stripStat(lastBody)
             stat.ElseClauseList.forEach((clause, i) => {
+                //stripStat(lastBody)
                 bodyjoint(lastBodyOpen, lastBody, clause.Token)
                 lastBodyOpen = clause.Token
 
@@ -3128,6 +2746,7 @@ function StripAst(ast) {
                 lastBody = clause.Body            
             })
 
+            //stripStat(lastBody)
             bodyjoint(lastBodyOpen, lastBody, stat.Token_End)
         } else if(stat.Type == "CallExprStat") {
             stripExpr(stat.Expression)
@@ -3184,63 +2803,13 @@ function indexToVarName(index) {
     let id = ""
     let d = index % VarStartDigits.length
     index = (index - d) / VarStartDigits.length
-    id = `${id}${VarStartDigits[d + 1]}`
+    id = `${id}${VarStartDigits[d]}`
     while (index > 0) {
         let d = index % VarDigits.length
         index = (index - d) / VarDigits.length
-        id = `${id}${VarDigits[d+1]}`
+        id = `${id}${VarDigits[d]}`
     }
     return id
-}
-
-function BeautifyVariables(globalScope, rootScope, renameGlobals) {
-    let externalGlobals = []
-     globalScope.forEach((_var) => {
-        if (!_var.AssignedTo || !renameGlobals) {
-            externalGlobals[_var.Name] = true
-        }
-    })
-
-    let localNumber = 1
-    let globalNumber = 1
-    function setVarName(_var, name) {
-        _var.Name = name
-        _var.RenameList.forEach((setter) => {
-            setter(name)
-        })
-    }
-    
-    if (renameGlobals) {
-        let names = {}
-        globalScope.forEach((_var) => {
-            if (_var.AssignedTo && !_var.ChangedName) {
-                names[_var.Name] = names[_var.Name] || `G_${globalNumber}_`
-                _var.ChangedName = true
-                setVarName(_var, names[_var.Name])
-                globalNumber++
-            }
-        })
-    }
-
-    function modify(scope) {
-        scope.VariableList.forEach((_var) => {
-            let name = `L_${localNumber}_`
-            if (_var.Info.Type == "Argument") {
-                name = `${name}arg${_var.Info.Index}`
-            } else if(_var.Info.Type == "LocalFunction") {
-                name = `${name}func`
-            } else if(_var.Info.Type == "ForRange") {
-                name = `${name}forvar${_var.Info.Index}`
-            }
-            setVarName(_var, name)
-            localNumber++
-        })
-        scope.ChildScopeList.forEach((scope1) => {
-            modify(scope1)
-        })
-    }
-    
-    modify(rootScope)
 }
 
 function MinifyVariables_2(globalScope, rootScope, renameGlobals) {
@@ -3291,6 +2860,7 @@ function MinifyVariables_2(globalScope, rootScope, renameGlobals) {
             }
             varNamesLazy[i] = name
         }
+        
         return name
     }
 
@@ -3361,46 +2931,31 @@ function MinifyVariables_2(globalScope, rootScope, renameGlobals) {
 
 let luaminp = {}
 
-luaminp.Beautify = function(scr, options) {
-    let ast = CreateLuaParser(scr)
-    let [glb, root] = AddVariableInfo(ast)
-
-    if (options.RenameVariables) {
-        BeautifyVariables(glb, root, options.RenameGlobals)
-    }
-
-    if (options.SolveMath == true) {
-        SolveMath(ast) // oboy
-    }
-
-    FormatAst(ast)
-
-    let result = PrintAst(ast)
-    return result
-}
-
-
 luaminp.Minify = function(scr, options) {
+    print("Minifying")
 
+    print("Creating lua parser...")
     let ast = CreateLuaParser(scr)
+    print("Adding variable info")
     let [glb, root] = AddVariableInfo(ast)
 
     if (options.RenameVariables == true) {
+        print("Renaming variables")
         MinifyVariables_2(glb, root, options.RenameGlobals)
     }
 
     if (options.SolveMath == true) {
+        print("Solving math")
         SolveMath(ast) // oboy
     }
 
+    print("Stripping ast")
     StripAst(ast)
 
+    print("Printing ast")
     let result = PrintAst(ast)
 
     return result
 }
 
-
-module.exports.Beautify = luaminp.Beautify
 module.exports.Minify = luaminp.Minify
-module.exports.Uglify = luaminp.Uglify

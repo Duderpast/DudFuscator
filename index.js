@@ -1,7 +1,7 @@
 //  src, yes this is rerubi based shit obf
 
 let DefaultSettings = {
-    '__VERSION__': '',
+    '__VERSION__': ' by Duder#1827',
 
     'Debug': false,
     'SkipMinify': false,
@@ -10,7 +10,7 @@ let DefaultSettings = {
     'BeautifyDebug': true,
     'PrintStep': false,
     'JIT': false,
-    'Watermark': `7`,
+    'Watermark': `discord.discord.discord/`,
     'Uid': '1',
 
     'AntiTamper': true,
@@ -136,7 +136,7 @@ module.exports = {
             }
     
         }
-        code = `--[[\n\tПаста Боронида \n\t  Вопросы?${settings.__VERSION__}\n--]]\n\n` + code
+        code = `--[[\n\tФорк Боронида\n\t  Вопросы?\n\t    😀${settings.__VERSION__}\n--]]\n\n` + code
 
         if (settings.JIT && process.platform === 'win32') {
             console.log(`Running file ('./obf/temp/output.lua')...`)

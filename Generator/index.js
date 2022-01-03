@@ -1,308 +1,323 @@
+
 /*
     generator.js - herrtt
 */
 
-const date = new Date();
+const date = new Date()
 
-const lastTime = null;
-const print = () => null;/*
+let lastTime = null;
+const print =() => null;/*
     let newT = new Date().getTime()
     let diff = newT - (lastTime === null ? newT : lastTime)
     lastTime = newT
     console.log(`| ms since l.p.`, diff, `| :`, x)
-} */
+}*/
 
 const fs = require('fs');
 const path = require('path');
 function xorStrArr(bytes, key) {
-  const result = [];
-  let j = 0;
-  for (let i = 0; i < bytes.length; ++i) {
-    result[i] = (typeof (bytes[i]) === 'string'
+    let result = [];
+    let j = 0;
+    for (let i = 0; i < bytes.length; ++i) {
+      result[i] = (typeof(bytes[i]) == 'string'
       	? bytes[i].charCodeAt() : bytes[i]) ^ key.charCodeAt(j);
-    ++j;
-    if (j >= key.length) {
-      j = 0;
+      ++j;
+      if (j >= key.length) {
+        j = 0;
+      }
     }
-  }
-  return result;
+    return result;
 }
 
-const opdata = require('../Bytecode/opdata.json');
-const vmPath = path.join(global.TopDir, 'vm');
+
+const opdata = require('../Bytecode/opdata.json')
+const vmPath = path.join(global.TopDir, 'vm')
 const vm = {
-  opcodes: [],
-};
+    opcodes: []
+}
+
 
 for (let Idx = 0; Idx < opdata.Opnames.length; Idx++) {
-  const opname = opdata.Opnames[Idx];
-  const path_ = path.join(vmPath, 'opcodes', `${opname}.lua`);
-  if (fs.existsSync(path_)) {
-    vm.opcodes[Idx] = {
-      name: opname,
-      code: fs.readFileSync(path_).toString(),
-    };
-  }
+    let opname = opdata.Opnames[Idx]
+    let path_ = path.join(vmPath, 'opcodes', `${opname}.lua`)
+    if (fs.existsSync(path_)) {
+        vm.opcodes[Idx] = {
+            name: opname,
+            code: fs.readFileSync(path_).toString()
+        }
+    }
 }
 
-const customOpcodeFiles = fs.readdirSync(path.join(vmPath, 'customOpcodes'));
+var customOpcodeFiles = fs.readdirSync(path.join(vmPath, 'customOpcodes'))
 for (filename of customOpcodeFiles) {
-  const name = filename.split('.').slice(0, -1).join('.'); // Sliced file extension
-  vm.opcodes[name] = {
-    name,
-    code: fs.readFileSync(path.join(vmPath, 'customOpcodes', filename)).toString(),
-  };
+    let name = filename.split('.').slice(0, -1).join('.') // Sliced file extension
+    vm.opcodes[name] = {
+        name: name,
+        code:  fs.readFileSync(path.join(vmPath, 'customOpcodes', filename)).toString()
+    }
 }
 
 function shuffleArray(array) {
-  let currentIndex = array.length; let
-    randomIndex;
-
-  // While there remain elements to shuffle...
-  while (currentIndex !== 0) {
-    // Pick a remaining element...
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex--;
-
-    // And swap it with the current element.
-    [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]];
-  }
-
-  return array;
+    var currentIndex = array.length,  randomIndex;
+  
+    // While there remain elements to shuffle...
+    while (0 !== currentIndex) {
+  
+      // Pick a remaining element...
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+  
+      // And swap it with the current element.
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex], array[currentIndex]];
+    }
+  
+    return array;
 }
 
 function genString(length) {
-  let result = '';
-  const characters = '_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const charactersLength = characters.length;
-  result += characters.charAt(Math.floor(Math.random() * characters.length - 10));
-  length--;
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random()
- * charactersLength));
-  }
-  return result;
+    var result           = '';
+    var characters       = '_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    result += characters.charAt(Math.floor(Math.random() * characters.length - 10));
+    length--;
+    for ( var i = 0; i < length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * 
+ charactersLength));
+   }
+   return result;
 }
 
 function makeId(length) {
-  let result = '';
-  const characters = '_xXyYzoOiIlLZ0123456789';
-  const charactersLength = characters.length;
-  result += characters.charAt(Math.floor(Math.random() * (characters.length - 10)));
-  length--;
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random()
- * charactersLength));
-  }
-  return result;
+    var result           = '';
+    var characters       = '_xXyYzoOiIlLZ0123456789';
+    var charactersLength = characters.length;
+    result += characters.charAt(Math.floor(Math.random() * (characters.length - 10 )));
+    length--;
+    for ( var i = 0; i < length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * 
+ charactersLength));
+   }
+   return result;
 }
 
 function toEscStr(arr) {
-  let a = '';
-  if (arr.length > 0) a += '\\';
-  return a + arr.join('\\');
+    let a = ''
+    if (arr.length > 0)
+        a += '\\'
+    return a + arr.join('\\')
 }
 
 function toEscStrF(str) {
-  let a = '';
-  for (let i = 0; i < str.length; i++) a += `\\${str.charCodeAt(i)}`;
-  return a;
+    let a = ''
+    for (let i = 0; i < str.length; i++)
+        a += `\\${str.charCodeAt(i)}`
+    return a
 }
 
 function cControlFlow(code, n = Math.floor(Math.random() * 7000), a = Math.floor(Math.random() * 7000), depth = 0, depthValues) {
-  depthValues = depthValues || [];
-  depthValues.push([n, a]);
+    depthValues = depthValues || []
+    depthValues.push([ n, a ])
 
-  let src = depth === 0 ? `local N_1_ = ${n};\nlocal A_1_ = ${a};\n` : '';
-  if (n < a) {
-    src += 'while (N_1_ < A_1_) do\n';
-    src += `A_1_ = N_1_ - ${a * 2};\n`;
-    a = n - (a * 2);
-    depthValues[depth][2] = '1';
-  } else if (n > a) {
-    const ran = Math.floor(Math.random() * 5000) + 10;
-    src += `while (N_1_ > (A_1_ - ${Math.floor(Math.random() * 3) + 10})) do\n`;
-    src += `A_1_ = (N_1_ + ${ran}) * 2;\n`;
-    a = (n + ran) * 2;
-    depthValues[depth][2] = '2';
-  } else if (n === a) {
-    const ran = Math.floor(Math.random() * 5000) + 10;
-    src += 'while (N_1_ == A_1_) do\n';
-    src += `A_1_ = (N_1_ + ${ran}) * 2;\n`;
-    a = (n + ran) * 2;
-    depthValues[depth][2] = '3';
-  }
-
-  if (depth === (code.length - 1)) {
-    src += `${code.shift()}\n`;
-  } else {
-    	const [_1, _2, _3] = cControlFlow(code, n, a, depth + 1, depthValues);
-    src += _1;
-    n = _2;
-    a = _3;
-  }
-  src += 'end;\n';
-
-  const dp = depthValues[depth - 1];
-  if (dp != undefined) {
-    const [dn, da, dt] = dp;
-    if (n > a) {
-      src += `if N_1_ > (A_1_ - ${n * 2}) then\n`;
-    } else if (n < a) {
-      src += `if (${n * 2} - N_1_) < (A_1_ + ${n + Math.floor(Math.random() * 50)}) then\n`;
-    } else if (n == a) {
-      src += 'if N_1_ == A_1_ then\n';
+    let src = depth === 0 ? `local N_1_ = ${n};\nlocal A_1_ = ${a};\n` : '';
+    if (n < a) {
+        src += `while (N_1_ < A_1_) do\n` 
+        src += `A_1_ = N_1_ - ${a * 2};\n`
+        a = n - (a * 2)
+        depthValues[depth][2] = '1'
+    } else if(n > a) {
+        let ran = Math.floor(Math.random() * 5000) + 10
+        src += `while (N_1_ > (A_1_ - ${Math.floor(Math.random() * 3) + 10})) do\n`
+        src += `A_1_ = (N_1_ + ${ran}) * 2;\n`
+        a = (n + ran) * 2;
+        depthValues[depth][2] = '2'
+    } else if(n === a) {
+        let ran = Math.floor(Math.random() * 5000) + 10
+        src += `while (N_1_ == A_1_) do\n`
+        src += `A_1_ = (N_1_ + ${ran}) * 2;\n`
+        a = (n + ran) * 2;
+        depthValues[depth][2] = '3'
     }
 
-    if (dt == '1') {
-      src += `N_1_ = ((A_1_ + ${dn}) * 2);\n`;
-      n = (a + dn) * 2;
-      if (code[0] != undefined) src += `${code.shift()}\n`;
-      src += 'end;\n';
-    } else if (dt == '2') {
-      src += `A_1_ = (N_1_ + ${(dn) * 2});\n`;
-      a = n + (dn) * 2;
-      if (code[0] != undefined) src += `${code.shift()}\n`;
-      src += 'end;\n';
-    } else if (dt == '3') {
-      src += `N_1_ = (A_1_ / 2) - ${dt * 2};\n`;
-      n = (a / 2) - (dt * 2);
-      if (code[0] != undefined) src += `${code.shift()}\n`;
-      src += 'end;\n';
+    if (depth === (code.length - 1)) {
+        src += `${code.shift()}\n`;
+    } else {
+    	let [ _1, _2, _3 ]  = cControlFlow(code, n, a, depth + 1, depthValues)
+        src += _1
+        n = _2
+        a = _3 
     }
-  }
+    src += `end;\n`
 
-  return depth === 0 ? src : [src, n, a];
+    let dp = depthValues[depth - 1] 
+    if (dp != undefined) {
+        let [ dn, da, dt ] = dp
+        if (n > a) {
+            src += `if N_1_ > (A_1_ - ${n * 2}) then\n`
+        } else if(n < a) {
+            src += `if (${n * 2} - N_1_) < (A_1_ + ${n + Math.floor(Math.random() * 50)}) then\n`
+        } else if(n == a) {
+            src += `if N_1_ == A_1_ then\n`
+        }
+
+        if (dt == '1') {
+            src += `N_1_ = ((A_1_ + ${dn}) * 2);\n`
+            n = (a + dn) * 2
+            if (code[0] != undefined)
+                src += `${code.shift()}\n`
+            src += `end;\n`
+        } else if(dt == '2') {
+            src += `A_1_ = (N_1_ + ${(dn) * 2});\n`
+            a = n + (dn) * 2
+            if (code[0] != undefined)
+                src += `${code.shift()}\n`
+            src += `end;\n`
+        } else if(dt == '3') {
+            src += `N_1_ = (A_1_ / 2) - ${dt * 2};\n`
+            n = (a / 2) - (dt * 2)
+            if (code[0] != undefined)
+                src += `${code.shift()}\n`
+            src += `end;\n`
+        }
+    }
+
+	return depth === 0 ? src : [ src, n, a ] 
 }
 
-const opstatTypes = [
-  'if (__A__ ~= __X__) then\n\t--RELOOP\nelse\n\t--CODE_A\nend;',
-  'if (__X__ ~= __A__) then\n\t--RELOOP\nelse\n\t--CODE_A\nend;',
-  'if (__A__ == __X__) then\n\t--CODE_A\nelse\n\t--RELOOP\nend;',
-  'if (__X__ == __A__) then\n\t--CODE_A\nelse\n\t--RELOOP\nend;',
+let opstatTypes = [
+    `if (__A__ ~= __X__) then\n\t--RELOOP\nelse\n\t--CODE_A\nend;`,
+    `if (__X__ ~= __A__) then\n\t--RELOOP\nelse\n\t--CODE_A\nend;`,
+    `if (__A__ == __X__) then\n\t--CODE_A\nelse\n\t--RELOOP\nend;`,
+    `if (__X__ == __A__) then\n\t--CODE_A\nelse\n\t--RELOOP\nend;`,
 
-  'if (__A__ ~= __X__) then\n\t--RELOOP\nelseif (__X__ == __A__) then\n\t--CODE_A\nend;',
-  'if (__X__ ~= __A__) then\n\t--RELOOP\nelseif (__A__ == __X__) then\n\t--CODE_A\nend;',
-  'if (__A__ == __X__) then\n\t--CODE_A\nelseif (__X__ ~= __A__) then\n\t--RELOOP\nend;',
-  'if (__X__ == __A__) then\n\t--CODE_A\nelseif (__X__ ~= __A__) then\n\t--RELOOP\nend;',
-];
+    `if (__A__ ~= __X__) then\n\t--RELOOP\nelseif (__X__ == __A__) then\n\t--CODE_A\nend;`,
+    `if (__X__ ~= __A__) then\n\t--RELOOP\nelseif (__A__ == __X__) then\n\t--CODE_A\nend;`,
+    `if (__A__ == __X__) then\n\t--CODE_A\nelseif (__X__ ~= __A__) then\n\t--RELOOP\nend;`,
+    `if (__X__ == __A__) then\n\t--CODE_A\nelseif (__X__ ~= __A__) then\n\t--RELOOP\nend;`
+]
 
-const replaceAll = (str, ser, rep) => str.split(ser).join(rep);
+let replaceAll = (str, ser, rep) => 
+    str.split(ser).join(rep)
 
 function generateSuperOp(virtual, tree) {
-  let obf = '';
+    let obf = ''
 
-  // console.log(virtual.Name)
-  virtual.Instructions.forEach((v, i) => {
-    if (v !== null) {
-      // console.log( v.Name, v.Enum, v.Name.toString(), tree.ROpmap[v.Name.toString()])
-      obf += '\nInst = Chunk[\'|Inst|\'][pc]; pc = pc + 1;\n';
-      obf += vm.opcodes[tree.ROpmap[v.Enum.toString()]].code;
-    }
-  });
+    //console.log(virtual.Name)
+    virtual.Instructions.forEach((v, i) => {
+        if (v !== null) {
+            //console.log( v.Name, v.Enum, v.Name.toString(), tree.ROpmap[v.Name.toString()])
+            obf += `\nInst = Chunk['|Inst|'][pc]; pc = pc + 1;\n`
+            obf += vm.opcodes[tree.ROpmap[v.Enum.toString()]].code
+        }
+    })
 
-  return obf;
+
+    return obf
 }
 
 function CreateOpcodeStat(opcodes, fakeCode = [], tree, debug = false, d = 0) {
-  const type = Math.floor(Math.random() * opstatTypes.length);
-  let codeR = opstatTypes[type];
-  let s = '';
-  let codeA;
-  let name;
-  if (typeof opcodes[0] === 'object') {
-    if (opcodes[0].fake === true) {
-      name = opcodes[0].name;
-      codeA = { code: (shuffleArray(fakeCode)[0] !== null && fakeCode[0] !== undefined) ? fakeCode[0] : '', fake: true };
+    
+    let type = Math.floor(Math.random() * opstatTypes.length)
+    let codeR = opstatTypes[type]
+    let s = ''
+    let codeA
+    let name
+    if (typeof opcodes[0] === 'object') {
+        if (opcodes[0].fake === true) {
+            name = opcodes[0].name
+            codeA = { code: (shuffleArray(fakeCode)[0] !== null && fakeCode[0] !== undefined) ? fakeCode[0] : '', fake: true }
+        } else {
+            name = opcodes[0].Name
+            codeA = { code: generateSuperOp(opcodes[0], tree), fake: true , name: 'ban'}
+        }
+
     } else {
-      name = opcodes[0].Name;
-      codeA = { code: generateSuperOp(opcodes[0], tree), fake: true, name: 'ban' };
+        name = opcodes[0]
+        codeA = vm.opcodes[tree.ROpmap[opcodes[0].toString()]]
     }
-  } else {
-    name = opcodes[0];
-    codeA = vm.opcodes[tree.ROpmap[opcodes[0].toString()]];
-  }
 
-  if (!codeA) {
-    throw `Missing ${opdata.Opnames[tree.ROpmap[opcodes[0].toString()]]}, ${tree.ROpmap[opcodes[0].toString()]}`;
-  }
+    if (!codeA) {
+        throw `Missing ${opdata.Opnames[tree.ROpmap[opcodes[0].toString()]]}, ${tree.ROpmap[opcodes[0].toString()]}`; 
+    }
 
-  if (codeA.fake !== true && debug !== true && codeA.modified !== true) {
-    // codeA.code = cControlFlow([ codeA.code ])
-    codeA.modified = true;
-  }
+    if (codeA.fake !== true && debug !== true && codeA.modified !== true) {
+        //codeA.code = cControlFlow([ codeA.code ])
+        codeA.modified = true
+    }
 
-  codeR = replaceAll(codeR, '__A__', `"${name}"`);
-  codeR = replaceAll(codeR, '__X__', 'OP_CODE');
-  codeR = replaceAll(codeR, '--CODE_A', codeA.code);
-  codeR = replaceAll(codeR, '\n', `\n${d <= 0 ? '' : '\t'.repeat(d)}`);
-  if (opcodes.length <= 1) {
-    codeR = replaceAll(codeR, '--RELOOP', '');
-  } else {
-    opcodes.shift();
-    codeR = replaceAll(codeR, '--RELOOP', CreateOpcodeStat(opcodes, fakeCode, tree, debug, d + 1));
-  }
+    codeR = replaceAll(codeR, '__A__', `"${name}"` )
+    codeR = replaceAll(codeR, '__X__', 'OP_CODE')
+    codeR = replaceAll(codeR, '--CODE_A', codeA.code)
+    codeR = replaceAll(codeR, '\n', '\n' + (d <= 0 ? '' : '\t'.repeat(d)))
+    if (opcodes.length <= 1) {
+        codeR = replaceAll(codeR, '--RELOOP', '')
+    } else {
+        opcodes.shift()
+        codeR = replaceAll(codeR, '--RELOOP', CreateOpcodeStat(opcodes, fakeCode, tree, debug, d + 1))
+    }
 
-  s += codeR;
-  return s;
+    s += codeR
+    return s
 }
 
 function from_int(x, b = 4) {
-  const v = [];
-  x = Math.floor(x);
-  if (x < 0) {
-    x = 4294967296 + x;
-  }
-  for (i = 0; i < b; i++) {
-    const c = x % 256;
-    v.push(c);
-    x = Math.floor(x / 256);
-  }
-  return v;
+    let v = []
+    x = Math.floor(x)
+    if (x < 0) {
+        x = 4294967296 + x
+    }
+    for (i = 0; i < b; i++) {
+        let c = x % 256
+        v.push(c)
+        x = Math.floor(x / 256)
+    }
+    return v
 }
 
 function updateRegisters(inst, chunk) {
-  if (inst.IsDataType) return;
+    if (inst.IsDataType)
+        return;
+    
+    inst.InstrPoint = chunk.Instr.indexOf(inst)
+    //console.log("UPD:", inst.Name)
+    switch (inst.Name) {
+        case 'LOADK':
+        case 'GETGLOBAL':
+        case 'SETGLOBAL':
+            // Update constants (later?)
+            break
 
-  inst.InstrPoint = chunk.Instr.indexOf(inst);
-  // console.log("UPD:", inst.Name)
-  switch (inst.Name) {
-    case 'LOADK':
-    case 'GETGLOBAL':
-    case 'SETGLOBAL':
-      // Update constants (later?)
-      break;
+        case 'JMP':
+        case 'FORLOOP':
+        case 'LOADJUMP': // Custom
+        case 'FORPREP':
+            //console.log("WA:", inst['2'], chunk.Instr.indexOf(inst.References[0]) - chunk.Instr.indexOf(inst) - 1)
+            inst['2'] = chunk.Instr.indexOf(inst.References[0]) - chunk.Instr.indexOf(inst) - 1
+            break
+        default: break
+    }
 
-    case 'JMP':
-    case 'FORLOOP':
-    case 'LOADJUMP': // Custom
-    case 'FORPREP':
-      // console.log("WA:", inst['2'], chunk.Instr.indexOf(inst.References[0]) - chunk.Instr.indexOf(inst) - 1)
-      inst['2'] = chunk.Instr.indexOf(inst.References[0]) - chunk.Instr.indexOf(inst) - 1;
-      break;
-    default: break;
-  }
 }
 
 function CreateInstDecoder(chunk, tree, settings) {
-  const createControlFlow = settings.Debug === true ? (c) => c.join('\n') : cControlFlow;
-  let dec = '';
+    let createControlFlow = settings.Debug === true ?  c => c.join('\n') : cControlFlow;
+    let dec = ''
+    
+    
+    let eTypes = {
+        ABC: 'a',
+        ABx: 'b',
+        AsBx: 'x',
+        NOP: 'n',
+        SOP: 's'
+    }
 
-  const eTypes = {
-    ABC: 'a',
-    ABx: 'b',
-    AsBx: 'x',
-    NOP: 'n',
-    SOP: 's',
-  };
+    let BooleanEnc = {
+        True: 'x',
+        False: 'y'
+    }
 
-  const BooleanEnc = {
-    True: 'x',
-    False: 'y',
-  };
-
-  dec += `
+    dec += `
     local usedInstsCache = { }
     local function decodeLoadStr(str)
         local t = { }
@@ -387,41 +402,41 @@ function CreateInstDecoder(chunk, tree, settings) {
             local c = read()
             --print("=>", c:byte(), p)
             ${shuffleArray([
-    `if c == char0 then -- addinst
+                `if c == char0 then -- addinst
                     local Inst = {};
                     local opn_size = byte(read());
                     local opname = read(opn_size);
                     local a, b, c = gABC();
                     ${shuffleArray([
-    'Inst[_n1] = a;',
-    'Inst[_n2] = b;',
-    'Inst[_n3] = c;',
-    'Inst["__value__"] = gByte5();',
-  ]).join('\n')}
+                        "Inst[_n1] = a;",
+                        "Inst[_n2] = b;",
+                        "Inst[_n3] = c;",
+                        `Inst["__value__"] = gByte5();`
+                    ]).join('\n')}
                     --print("-", opname, a, b, c, Inst["__value__"]);
                     VM(opname)(Inst);
                     local index = gByte4();
                     usedInstsCache[index] = opname;
                 end;`,
-    `if c == char1 then -- addinst from cache
+                `if c == char1 then -- addinst from cache
                     local Inst = {};
                     local index = byte(read());--gByte4();
                     local opname = usedInstsCache[index];
                     local a, b, c = gABC();
                     ${shuffleArray([
-    'Inst[_n1] = a;',
-    'Inst[_n2] = b;',
-    'Inst[_n3] = c;',
-    'Inst["__value__"] = gByte5();',
-  ]).join('\n')}
+                        "Inst[_n1] = a;",
+                        "Inst[_n2] = b;",
+                        "Inst[_n3] = c;",
+                        `Inst["__value__"] = gByte5();`
+                    ]).join('\n')}
 
                     --print("-", opname, a, b, c, Inst["__value__"]);
                     VM(opname)(Inst);
                 end`,
-    `if c == char2 then -- break
+                `if c == char2 then -- break
                     break
-                end`,
-  ]).join('\n')}
+                end`
+            ]).join('\n')}
     
             if p > l then
                 break
@@ -435,137 +450,149 @@ function CreateInstDecoder(chunk, tree, settings) {
 
         return t;
     end
-    `;
+    `
 
-  const instCache = {};
-  let cIdx = 0;
-  let s = '';
-  for (const idx in chunk.Instr) {
-    const inst = chunk.Instr[idx];
-    if (inst === null) continue;
+    let instCache = {}
+    let cIdx = 0
+    let s = ''
+    for (let idx in chunk.Instr) {
+        let inst = chunk.Instr[idx]
+        if (inst === null)
+            continue;
 
-    // console.log("-1>", inst.Name, inst['1'], inst['2'], inst['3'])
-    updateRegisters(inst, chunk);
-    // console.log("-2>", inst.Name, inst['1'], inst['2'], inst['3'])
 
-    let cacheIdx = instCache[inst.Enum];
-    const inCache = typeof cacheIdx === 'number';
-    if (!inCache) cacheIdx = ++cIdx;
+         //console.log("-1>", inst.Name, inst['1'], inst['2'], inst['3'])
+         updateRegisters(inst, chunk)
+         //console.log("-2>", inst.Name, inst['1'], inst['2'], inst['3'])
 
-    s += `\\${inCache ? 1 : 0}`;
+        let cacheIdx = instCache[inst.Enum]
+        let inCache = typeof cacheIdx === 'number'
+        if (!inCache)
+            cacheIdx = ++cIdx;
 
-    if (inCache) s += `\\${from_int(cacheIdx, 1).join('\\')}`;
-    else s += `\\${from_int(inst.Enum.length, 1).join('\\')}${inst.Enum}`; // Name Length + Name
+        s += `\\${inCache ? 1 : 0}`;
 
-    s += (eTypes[inst.Type]); // Type
-    if (inst.Type === 'SOP' || inst.Type === 'NOP') {
-      s += `\\${from_int(inst.Value, 5).join('\\')}`;
-      if (!inCache) {
-        instCache[inst.Enum] = cIdx;
-        s += `\\${from_int(cIdx).join('\\')}`;
-      }
-    } else {
-      if (typeof inst['1'] === 'boolean') s += `\\1${inst['1'] === true ? BooleanEnc.True : BooleanEnc.False}`;
-      else s += `\\0\\${from_int(inst['1'] === null ? 0 : inst['1'], 1).join('\\')}`;
+        if (inCache)
+            s += `\\${from_int(cacheIdx, 1).join('\\')}`;
+        else
+            s += `\\${from_int(inst.Enum.length, 1).join('\\')}${inst.Enum}`; // Name Length + Name
 
-      if (typeof inst['2'] === 'boolean') s += `\\1${inst['2'] === true ? BooleanEnc.True : BooleanEnc.False}`;
-      else {
-        let n = inst['2'] === null ? 0 : inst['2'];
-        if (inst.Type === 'AsBx') n += 131071;
-        s += `\\0\\${from_int(n, inst.Type === 'ABC' ? 3 : 4).join('\\')}`;
-      }
+        s += (eTypes[inst.Type]); // Type
+        if (inst.Type === 'SOP' || inst.Type === 'NOP') {
+            s += `\\${from_int(inst.Value, 5).join('\\')}`;
+            if (!inCache) {
+                instCache[inst.Enum] = cIdx;
+                s += `\\${from_int(cIdx).join('\\')}`;
+            }
+        } else {
+            if (typeof inst['1'] === 'boolean')
+                s += `\\1${inst['1'] === true ? BooleanEnc.True : BooleanEnc.False}`;
+            else
+                s += `\\0\\${from_int(inst['1'] === null ? 0 : inst['1'], 1).join('\\')}`;
 
-      if (inst['3'] !== null) {
-        if (typeof inst['3'] === 'boolean') s += `\\1${inst['3'] === true ? BooleanEnc.True : BooleanEnc.False}`;
-        else s += `\\0\\${from_int(inst['3'] === null ? 0 : inst['3'], 3).join('\\')}`;
-      }
-
-      s += `\\${from_int(inst.Value, 5).join('\\')}`;
-      if (!inCache) {
-        instCache[inst.Enum] = cIdx;
-        s += `\\${from_int(cIdx).join('\\')}`;
-      }
-    }
-  }
-  s += '\\2';
-
-  dec += `
-    decodeLoadStr(|INST_LOAD_VAR|);
-    `;
-
-  return [dec, s];
-}
-
-module.exports = {
-  async Generate(tree, settings) {
-    print('Generating code');
-    const strs = [];
-    function genUniString(l = 9) {
-      let res;
-      do {
-        res = `x${makeId(l)}`;
-      } while (strs.includes(res));
-      strs.push(res);
-      return res;
-    }
-
-    let s = '';
-    // s += vm.start
-
-    print('creating keys and unique names');
-    const ranKey = genString(12);
-    const ranKey2 = `_${genUniString()}`;
-    const stringGmatchIdx = `_${genUniString(15)}`;
-    const stringCharIdx = `_${genUniString(15)}`;
-    const stringByteIdx = `_${genUniString(15)}`;
-    const mtIdxStr = `_${genUniString(Math.floor(Math.random() * 6) + 12)}`;
-    const xorName = `_${genUniString(16)}`;
-
-    print('preparing control flow');
-    const createControlFlow = settings.Debug === true ? (c) => c.join('\n') : cControlFlow;
-
-    print('creating header and bits functions');
-
-    const watermarkStart = `\nlocal ${shuffleArray(['CONST_TABLE', 'gfenv', 'WATERMARK']).join(', ')} = nil, nil, nil;\n([[${settings.Watermark}]]):gsub('IGNORE:(.*)', function(w)
-
-            ${(shuffleArray([
-    `local watermark = "IGNORE:${genString(Math.floor(Math.random() * 20) + 5)}";`,
-    `local Shit = "IGNORE:${genString(Math.floor(Math.random() * 20) + 5)}";`,
-  ])).join('\n')}
-            ${createControlFlow(shuffleArray([
-    'watermark = w',
-    'Shit = w',
-    'gfenv = getfenv or function() return _ENV end;',
-  ]))}
-            
-            local __ENV__ = gfenv();
-            local charConst = __ENV__["IGNORE:string"]["IGNORE:${toEscStrF('char')}"](${('char').split('').map((v) => v.charCodeAt()).join(', ')})
-            local string = __ENV__[string[charConst](${('string').split('').map((v) => v.charCodeAt()).join(', ')})];
-            ${(shuffleArray([
-    `local byte = "IGNORE:${genString(Math.floor(Math.random() * 20) + 2)}";`,
-    `local char = "IGNORE:${genString(Math.floor(Math.random() * 20) + 2)}";`,
-    `local gmatch = "IGNORE:${genString(Math.floor(Math.random() * 20) + 2)}";`,
-  ])).join('\n')}
-
-            ${createControlFlow([
-    `char = __ENV__[string[charConst](${('string').split('').map((v) => v.charCodeAt()).join(', ')})][charConst];`,
-    `byte = __ENV__[string[charConst](${('string').split('').map((v) => v.charCodeAt()).join(', ')})][string[charConst](${('byte').split('').map((v) => v.charCodeAt()).join(', ')})];`,
-    `gmatch = __ENV__[string[charConst](${('string').split('').map((v) => v.charCodeAt()).join(', ')})][string[charConst](${('gmatch').split('').map((v) => v.charCodeAt()).join(', ')})];`,
-  ])}
-            CONST_TABLE = {
-                [watermark] = ${settings.Watermark.length},
-                ['IGNORE:${toEscStrF('_')}' .. char(${(settings.Watermark).split('').map((v) => v.charCodeAt()).join(', ')}) ] = Shit
+            if (typeof inst['2'] === 'boolean')
+                s += `\\1${inst['2'] === true ? BooleanEnc.True : BooleanEnc.False}`;
+            else {
+                let n = inst['2'] === null ? 0 : inst['2'];
+                if (inst.Type === 'AsBx')
+                    n = n + 131071;
+                s += `\\0\\${from_int(n, inst.Type === 'ABC' ? 3 : 4).join('\\')}`;
             }
 
-            CONST_TABLE[string[charConst](${(stringByteIdx).split('').map((v) => v.charCodeAt()).join(', ')})] = byte;
-            CONST_TABLE[string[charConst](${(stringCharIdx).split('').map((v) => v.charCodeAt()).join(', ')})] = char;
-            CONST_TABLE[string[charConst](${(stringGmatchIdx).split('').map((v) => v.charCodeAt()).join(', ')})] = gmatch;
+            if (inst['3'] !== null) {
+                if (typeof inst['3'] === 'boolean')
+                    s += `\\1${inst['3'] === true ? BooleanEnc.True : BooleanEnc.False}`;
+                else
+                    s += `\\0\\${from_int(inst['3'] === null ? 0 : inst['3'], 3).join('\\')}`;
+            }
+
+            s += `\\${from_int(inst.Value, 5).join('\\')}`;
+            if (!inCache) {
+                instCache[inst.Enum] = cIdx;
+                s += `\\${from_int(cIdx).join('\\')}`;
+            }
+        }
+    }
+    s += `\\2`;
+
+    dec += `
+    decodeLoadStr(|INST_LOAD_VAR|);
+    `
+
+    return [ dec, s ]
+}
+
+
+module.exports = {
+    Generate: async function(tree, settings) {
+        print("Generating code")
+        let strs = []
+        function genUniString(l = 9) {
+            let res
+            do {
+                res = `x${makeId(l)}`
+            } while (strs.includes(res))
+            strs.push(res)
+            return res
+        }
+
+        let s = ''
+        //s += vm.start
+
+        print("creating keys and unique names")
+        let ranKey = genString(12)
+        let ranKey2 = `_${genUniString()}`
+        let stringGmatchIdx = `_${genUniString(15)}`
+        let stringCharIdx = `_${genUniString(15)}`
+        let stringByteIdx = `_${genUniString(15)}`
+        let mtIdxStr = `_${genUniString(Math.floor(Math.random() * 6) + 12)}`
+        let xorName = `_${genUniString(16)}`
+
+        print("preparing control flow")
+        let createControlFlow = settings.Debug === true ?  c => c.join('\n') : cControlFlow
+
+        print("creating header and bits functions")
+
+        let watermarkStart = `\nlocal ${shuffleArray([ 'CONST_TABLE', 'gfenv', 'WATERMARK' ]).join(', ')} = nil, nil, nil;\n([[${settings.Watermark}]]):gsub('IGNORE:(.*)', function(w)
+
+            ${(shuffleArray([
+                `local watermark = "IGNORE:${genString(Math.floor(Math.random() * 20) + 5)}";`,
+                `local Shit = "IGNORE:${genString(Math.floor(Math.random() * 20) + 5)}";`, 
+            ])).join('\n')}
+            ${createControlFlow(shuffleArray([
+                "watermark = w",
+                "Shit = w",
+                "gfenv = getfenv or function() return _ENV end;"
+            ]))}
+            
+            local __ENV__ = gfenv();
+            local charConst = __ENV__["IGNORE:string"]["IGNORE:${toEscStrF("char")}"](${("char").split('').map(v => v.charCodeAt()).join(', ')})
+            local string = __ENV__[string[charConst](${("string").split('').map(v => v.charCodeAt()).join(', ')})];
+            ${(shuffleArray([
+                `local byte = "IGNORE:${genString(Math.floor(Math.random() * 20) + 2)}";`,
+                `local char = "IGNORE:${genString(Math.floor(Math.random() * 20) + 2)}";`, 
+                `local gmatch = "IGNORE:${genString(Math.floor(Math.random() * 20) + 2)}";`  
+            ])).join('\n')}
+
             ${createControlFlow([
-    'if (CONST_TABLE[watermark] ~= nil and (#Shit ~= CONST_TABLE[watermark])) then return 0; end;',
-    `if (char(${(settings.Watermark).split('').map((v) => v.charCodeAt()).join(', ')}) ~= watermark) then return false; end`,
-    `if (Shit ~= CONST_TABLE['IGNORE:${toEscStrF('_')}' .. watermark]) then return ""; end;`,
-    'WATERMARK = watermark',
-  ])}
+                `char = __ENV__[string[charConst](${("string").split('').map(v => v.charCodeAt()).join(', ')})][charConst];`,
+                `byte = __ENV__[string[charConst](${("string").split('').map(v => v.charCodeAt()).join(', ')})][string[charConst](${("byte").split('').map(v => v.charCodeAt()).join(', ')})];`,
+                `gmatch = __ENV__[string[charConst](${("string").split('').map(v => v.charCodeAt()).join(', ')})][string[charConst](${("gmatch").split('').map(v => v.charCodeAt()).join(', ')})];`
+            ])}
+            CONST_TABLE = {
+                [watermark] = ${settings.Watermark.length},
+                ['IGNORE:${toEscStrF("_")}' .. char(${(settings.Watermark).split('').map(v => v.charCodeAt()).join(', ')}) ] = Shit
+            }
+
+            CONST_TABLE[string[charConst](${(stringByteIdx).split('').map(v => v.charCodeAt()).join(', ')})] = byte;
+            CONST_TABLE[string[charConst](${(stringCharIdx).split('').map(v => v.charCodeAt()).join(', ')})] = char;
+            CONST_TABLE[string[charConst](${(stringGmatchIdx).split('').map(v => v.charCodeAt()).join(', ')})] = gmatch;
+            ${createControlFlow([
+                `if (CONST_TABLE[watermark] ~= nil and (#Shit ~= CONST_TABLE[watermark])) then return 0; end;`,
+                `if (char(${(settings.Watermark).split('').map(v => v.charCodeAt()).join(', ')}) ~= watermark) then return false; end`,
+                `if (Shit ~= CONST_TABLE['IGNORE:${toEscStrF("_")}' .. watermark]) then return ""; end;`,
+                `WATERMARK = watermark`,
+            ])}
 
             WATERMARK = watermark;
             CONST_TABLE[watermark] = nil;
@@ -573,16 +600,16 @@ module.exports = {
         local char = CONST_TABLE["IGNORE:${stringCharIdx}"];
         local byte = CONST_TABLE["IGNORE:${stringByteIdx}"];
         local gmatch = CONST_TABLE["IGNORE:${stringGmatchIdx}"];
-        local string = gfenv()[char(${('string').split('').map((v) => v.charCodeAt()).join(', ')})];
-        local format = string[char(${('format').split('').map((v) => v.charCodeAt()).join(', ')})];
-        local sub = string[char(${('sub').split('').map((v) => v.charCodeAt()).join(', ')})];
-        local next = gfenv()[char(${('next').split('').map((v) => v.charCodeAt()).join(', ')})];
-        local concat = gfenv()[char(${('table').split('').map((v) => v.charCodeAt()).join(', ')})][char(${('concat').split('').map((v) => v.charCodeAt()).join(', ')})];
-        local assert = gfenv()[char(${('assert').split('').map((v) => v.charCodeAt()).join(', ')})];
-        local pairs = gfenv()[char(${('pairs').split('').map((v) => v.charCodeAt()).join(', ')})];
-        local len = string[char(${('len').split('').map((v) => v.charCodeAt()).join(', ')})]
-        local rawget = gfenv()[char(${('rawget').split('').map((v) => v.charCodeAt()).join(', ')})];
-        local unpack = gfenv()[char(${('unpack').split('').map((v) => v.charCodeAt()).join(', ')})];
+        local string = gfenv()[char(${("string").split('').map(v => v.charCodeAt()).join(', ')})];
+        local format = string[char(${("format").split('').map(v => v.charCodeAt()).join(', ')})];
+        local sub = string[char(${("sub").split('').map(v => v.charCodeAt()).join(', ')})];
+        local next = gfenv()[char(${("next").split('').map(v => v.charCodeAt()).join(', ')})];
+        local concat = gfenv()[char(${("table").split('').map(v => v.charCodeAt()).join(', ')})][char(${("concat").split('').map(v => v.charCodeAt()).join(', ')})];
+        local assert = gfenv()[char(${("assert").split('').map(v => v.charCodeAt()).join(', ')})];
+        local pairs = gfenv()[char(${("pairs").split('').map(v => v.charCodeAt()).join(', ')})];
+        local len = string[char(${("len").split('').map(v => v.charCodeAt()).join(', ')})]
+        local rawget = gfenv()[char(${("rawget").split('').map(v => v.charCodeAt()).join(', ')})];
+        local unpack = gfenv()[char(${("unpack").split('').map(v => v.charCodeAt()).join(', ')})];
 
 
         local charactertable = {}
@@ -596,7 +623,7 @@ module.exports = {
         CONST_TABLE["IGNORE:${stringByteIdx}"] = nil;
         CONST_TABLE["IGNORE:${stringCharIdx}"] = nil;
         CONST_TABLE["IGNORE:${stringGmatchIdx}"] = nil;
-        local sub = gfenv()[char(${('string').split('').map((v) => v.charCodeAt()).join(', ')})][char(${('sub').split('').map((v) => v.charCodeAt()).join(', ')})];
+        local sub = gfenv()[char(${("string").split('').map(v => v.charCodeAt()).join(', ')})][char(${("sub").split('').map(v => v.charCodeAt()).join(', ')})];
         local constMTableIndex = "IGNORE:${mtIdxStr}";
         
         local domath = function(...) return ... end;
@@ -604,38 +631,38 @@ module.exports = {
         local environment = {''}
         
         ${shuffleArray([
-    `local getAWord = function(len, str, wordindex, Environment)
+            `local getAWord = function(len, str, wordindex, Environment)
                 len = len or 1
                 local word = Environment["|Stringsub|"](str, wordindex, domath(wordindex, domath(len, 1, "|SUB|"), "|ADD|")) --// wordindex + (len - 1)
                 wordindex = domath(wordindex, len, "|ADD|") --// wordindex + len
                 return word
             end`,
-    `--// generate this one like 1-3 times but randomize the 256
+            `--// generate this one like 1-3 times but randomize the 256
             local getBWord = function(str, wordindex, Environment)
                 local left, right = Environment["|Stringbyte|"](str, wordindex, wordindex + 1)
                 wordindex = wordindex + 2
                 return (right * 256) + left
             end`,
-    `--// generate this one 2-3 times and randomize the 65536 and 256
+            `--// generate this one 2-3 times and randomize the 65536 and 256
             local getCWord = function(str, wordindex, Environment)
                 local left, right, front = Environment["|Stringbyte|"](str, wordindex, wordindex + 2)
                 wordindex = wordindex + 3
                 return (front * 65536) + (right * 256) + left
             end`,
-    `--// generate this one 4-5 times and randomize the numbers
+            `--// generate this one 4-5 times and randomize the numbers
             local getDWord = function(str, wordindex, Environment)
                 local left, right, front, bacl = Environment["|Stringbyte|"](str, wordindex, wordindex + 3)
                 wordindex = wordindex + 4
                 return (back * 16777216) + (front * 65536) + (right * 256) + left;
             end`,
-    `--// generate this one 5 times and randomize the numbers
+            `--// generate this one 5 times and randomize the numbers
             local getQWord = function(str, wordindex, Environment)
                 local left, right, front, back, top = Environment["|Stringbyte|"](str, wordindex, wordindex + 4)
                 wordindex = wordindex + 5
                 return (back * 16777216) + (front * 65536) + (right * 256) + left
                 + (top * 4294967296);
-            end`,
-  ]).join('\n')}
+            end`
+        ]).join('\n')}
 
         --nerd
         -- thanks melancholy
@@ -694,9 +721,9 @@ module.exports = {
         
 
         local chartbl = {}
-        local ${shuffleArray(['BitXOR', 'XORString', 'XORTable', 'XORString1Fake', 'XORTable1Fake']).join(', ')}
+        local ${shuffleArray([ 'BitXOR', 'XORString', 'XORTable', 'XORString1Fake', 'XORTable1Fake' ]).join(', ')}
         ${createControlFlow(shuffleArray([
-    `
+            `
             XORString1Fake = function(str, key)
                 local res = "IGNORE:";
                 local a = 1
@@ -712,7 +739,7 @@ module.exports = {
                 return res   
             end;
             `,
-    `
+            `
             XORTable1Fake = function(tabl, key)
                 local res = "IGNORE:";
                 local a = 1
@@ -727,8 +754,8 @@ module.exports = {
     
                 return res
             end;
-            `,
-  ]))}
+            `
+            ]))}
 
         BitXOR = function(a,b) --Bitwise xor
             local p,c=1,0
@@ -751,7 +778,7 @@ module.exports = {
         end
 
         ${createControlFlow(shuffleArray([
-    `
+        `
         XORString = function(str, key)
             local res = "IGNORE:";
             local a = 1
@@ -767,7 +794,7 @@ module.exports = {
             return res   
         end;
         `,
-    `
+        `
         XORTable = function(tabl, key)
             local res = "IGNORE:";
             local a = 1
@@ -782,8 +809,8 @@ module.exports = {
 
             return res
         end;
-        `,
-  ]))}
+        `
+        ]))}
         
         local NumberTable = { {}, {} }
         local TrackNumberTable = 1
@@ -798,28 +825,28 @@ module.exports = {
 
         local characters = char(unpack(NumberTable[1])) .. char(unpack(NumberTable[2]))
 
-        local ${shuffleArray([
-    'XORTableSec',
-    'XORStringSec',
-    'xorSecondaryKey',
-    'xorPrimaryKey',
-    'XORStringPrim',
-    'xorDecodeckey',
-    'XORStringPrim1',
-  ]).join(', ')};
+        local ${shuffleArray([ 
+            'XORTableSec', 
+            'XORStringSec', 
+            'xorSecondaryKey', 
+            'xorPrimaryKey',
+            'XORStringPrim',
+            'xorDecodeckey',
+            'XORStringPrim1'
+        ]).join(', ')};
         xorSecondaryKey = XORTable({${xorStrArr(tree.XORSecondary, ranKey).join(', ')}}, "IGNORE:${toEscStrF(ranKey)}");
 
         ${createControlFlow(shuffleArray([
-    `XORTableSec = function(...)
+            `XORTableSec = function(...)
                 return XORTable(..., xorSecondaryKey)
             end;`,
-    `XORStringSec = function(a, ...)
+            `XORStringSec = function(a, ...)
                 return XORString(a, xorSecondaryKey, ...)
             end;`,
-    `XORStringPrim = function(a, ...)
+            `XORStringPrim = function(a, ...)
                 return XORString(a, xorPrimaryKey, ...)
-            end;`,
-  ]))}
+            end;`
+        ]))}
 
         xorPrimaryKey = XORTable({${xorStrArr(tree.XORPrimary, ranKey).join(', ')}}, "IGNORE:${toEscStrF(ranKey)}");
         xorDecodeckey = XORTable({${xorStrArr(tree.XORDecodeCKey, ranKey).join(', ')}}, "IGNORE:${toEscStrF(ranKey)}");
@@ -836,49 +863,50 @@ module.exports = {
             return res;
         end;
         local xorStrS1 = CONST_TABLE[XORTableSec({${xorStrArr(xorName, tree.XORSecondary)}})];
-        \n`;
+        \n`
 
-    s += 'CONST_TABLE = |ConstantTable|';
-    s += `CONST_TABLE["${xorName}"] = xorStrS1;`;
+        s += `CONST_TABLE = |ConstantTable|`
+        s += `CONST_TABLE["${xorName}"] = xorStrS1;`
 
-    print('adding environment variables');
-    const env = shuffleArray([
-      'string', 'pcall', 'error',
-      'table', 'setmetatable', 'tostring',
-      'tonumber', 'print', 'type',
-      'unpack', 'pairs', 'select',
-      'assert', 'coroutine', 'getmetatable',
-      'rawget', 'setraw',
+        print("adding environment variables")
+        let env = shuffleArray([
+            "string", "pcall", "error", 
+            "table", "setmetatable", "tostring", 
+            "tonumber", "print", "type", 
+            "unpack", "pairs", "select", 
+            "assert", "coroutine", "getmetatable",
+            "rawget", "setraw"
+            
+        ])
+        
+        s += `\n--START_ENV_LOAD\n`
+        for (n of env) {
+            let xored = `{${xorStrArr(n, tree.XORSecondary).join(', ')}}`
+            s += `local ${n} = gfenv()[XORTableSec(${xored})];\n`
+        }
+        s += `local xorStr = CONST_TABLE["IGNORE:${toEscStrF(xorName)}"];`
+        s+= `\n--END_ENV_LOAD\n`
 
-    ]);
+        s += `local cyield = coroutine["yield"];`
 
-    s += '\n--START_ENV_LOAD\n';
-    for (n of env) {
-      const xored = `{${xorStrArr(n, tree.XORSecondary).join(', ')}}`;
-      s += `local ${n} = gfenv()[XORTableSec(${xored})];\n`;
-    }
-    s += `local xorStr = CONST_TABLE["IGNORE:${toEscStrF(xorName)}"];`;
-    s += '\n--END_ENV_LOAD\n';
-
-    s += 'local cyield = coroutine["yield"];';
-
-    print('adding error handling');
-    s += `\nlocal function whatLineErr(...)
+        print("adding error handling")
+        s += `\nlocal function whatLineErr(...)
     local _, str = ...
     local Matched = gmatch(tostring(str), ':(%d*):')()
     return tonumber(Matched)
 end;
 
-local StartLine = whatLineErr(pcall(function() local a = "a" ^ 1 end));`;
+local StartLine = whatLineErr(pcall(function() local a = "a" ^ 1 end));`    
 
-    s += '\nlocal print = print;';
 
-    s += `\nlocal function _Returns(...)
+        s += `\nlocal print = print;`
+
+        s += `\nlocal function _Returns(...)
     return select('#', ...), {...};
-end;`;
+end;`
 
-    print('creating start of wrapper');
-    s += `\n
+        print("creating start of wrapper")
+        s += `\n
 
         local |INST_LOAD_VAR| = |INST_LOAD_SRC|;
         
@@ -900,27 +928,28 @@ end;`;
 
         local function new(signature, size_or_C, chunk_or_upvals, env, uvals)
             ${(() => {
-    const a = [
-      'local Chunk;',
-      'local current;',
-      'local last;',
-      'local ran;',
-      'local InstLen;',
-      'local ConstLen;',
-      'local ProtoLen;',
-      'local Env;',
-      'local size_constinst;',
-      'local Lupvals;',
-      'local Upvalues;',
-      'local isClosure = false;',
-      'for _ in integritycheckchartbl do break end;',
-    ];
+                let a = [
+                    "local Chunk;",
+                    "local current;",
+                    "local last;",
+                    "local ran;",
+                    "local InstLen;",
+                    "local ConstLen;",
+                    "local ProtoLen;",
+                    "local Env;",
+                    "local size_constinst;",
+                    "local Lupvals;",
+                    "local Upvalues;",
+                    "local isClosure = false;",
+                    "for _ in integritycheckchartbl do break end;"
+                ]
 
-    const r = Math.floor((Math.random() * 5) + 2);
-    for (let i = 0; i < r; i++) a.push(`local x${genString(9)} = "${genString(Math.floor(Math.random() * 10))}";`);
+                let r = Math.floor((Math.random() * 5) + 2)
+                for (let i = 0; i < r; i++)
+                    a.push(`local x${genString(9)} = "${genString(Math.floor(Math.random() * 10))}";`)
 
-    return shuffleArray(a).join('\n');
-  })()}
+                return shuffleArray(a).join('\n')
+            })()}
 
             if ((signature ~= 0 and size_or_C ~= "|OP_CLOSURE|") and signature ~= "|Signature|") then
                 while (signature ~= 0) do
@@ -940,21 +969,21 @@ end;`;
                 return a and xorPrimaryKey
             end)("${genString(10)}")
             local res = concat('', char(), '|CONCATSTRING|');
-            ${createControlFlow(['Chunk = isClosure and (chunk_or_upvals) or ({});'])}
+            ${createControlFlow(["Chunk = isClosure and (chunk_or_upvals) or ({});"])}
             ${createControlFlow(shuffleArray([
-    'ran = false;',
-    'Env = (isClosure == true and env) or (isClosure == false and uvals or gfenv()) or {};',
-    'size_constinst = isClosure and ({}) or (size_or_C)',
-    'Chunk[\'|T_UPVALS|\'] = isClosure and (Chunk[\'|T_UPVALS|\']) or (chunk_or_upvals);',
-    'Lupvals = {}',
-    "InstLen = isClosure and (Chunk['|Inst|'][-1]) or (1);",
-    "ConstLen = isClosure and (Chunk['|Const|'][-1]) or (0);",
-    'ProtoLen = (0);',
-    'Upvalues = isClosure and uvals;',
-  ]))}
+                "ran = false;",
+                "Env = (isClosure == true and env) or (isClosure == false and uvals or gfenv()) or {};",
+                "size_constinst = isClosure and ({}) or (size_or_C)",
+                `Chunk['|T_UPVALS|'] = isClosure and (Chunk['|T_UPVALS|']) or (chunk_or_upvals);`,
+                "Lupvals = {}",
+                "InstLen = isClosure and (Chunk['|Inst|'][-1]) or (1);",
+                "ConstLen = isClosure and (Chunk['|Const|'][-1]) or (0);",
+                "ProtoLen = (0);",
+                "Upvalues = isClosure and uvals;"
+            ]))}
 
             ${createControlFlow([
-    `XORString1 = function(str, key)
+                `XORString1 = function(str, key)
                     local res1 = res
                     local a = reverser(-1, '|UNM|')
                     for i = 1, len(str) do
@@ -965,90 +994,91 @@ end;`;
 
                     return res1
                 end;`,
-    `XORStringPrim1 = function(a, ...)
+                `XORStringPrim1 = function(a, ...)
                     return XORString1(a, xorPrimaryKey1, ...);
-                end;`,
-  ])}
+                end;`
+            ])}
             
 
-            local Metamethods_ = {`;
+            local Metamethods_ = {`
 
-    print('creating metamethods');
-    let Metamethods = [
-      `\n["__index"] = function(self, index)
+        
+            print("creating metamethods")
+        let Metamethods = [
+`\n["__index"] = function(self, index)
     if (isClosure ~= true and ran) then
         ${createControlFlow([
-    " while (1 == 1 and ran == (#Chunk > -1)) do Chunk[index] = '\\0' end;",
-    'return;',
-  ])}
+            " while (1 == 1 and ran == (#Chunk > -1)) do Chunk[index] = '\\0' end;",
+            "return;",
+        ])}
     elseif (Chunk == nil) then
         Chunk = {}
     end;
 
     ${createControlFlow(shuffleArray([
-    "if (index == '__instr__') then current = index; end;",
-    "if (index == '__const__') then current = index; end;",
-    "if (index == '__proto__') then current = index; end;",
-    "if (index == '__init__') then current = index; end;",
-  ]))}
+        "if (index == '__instr__') then current = index; end;",
+        "if (index == '__const__') then current = index; end;",
+        "if (index == '__proto__') then current = index; end;",
+        "if (index == '__init__') then current = index; end;",
+    ]))}
 
     if (index ~= '__instr__' and index ~= '__const__' and index ~= '__init__' and index ~= '__proto__') then
         ${createControlFlow([
-    "return error('invalid index!');",
-  ])}
+            "return error('invalid index!');"
+        ])}
     end
     return self
 end;`,
 
-      `\n["__call"] = function(self, arg, A, B, C, D)
+`\n["__call"] = function(self, arg, A, B, C, D)
 if (isClosure ~= true and ran) then
     return error('Already ran (1)!')
 end
 if (current == '__instr__') then
     if (last) then
         ${createControlFlow([
-    `
+            `
             local Inst = { ['|Opcode|'] = last };
             ${createControlFlow(shuffleArray([
-    '|A| = arg[1];',
-    '|B| = arg[2];',
-    '|C| = arg[3];',
-    "Inst['SUPER_OP'] = false;",
-    "Chunk['|Inst|'][InstLen] = Inst;",
-  ]))}
+                "|A| = arg[1];",
+                "|B| = arg[2];",
+                "|C| = arg[3];",
+                "Inst['SUPER_OP'] = false;",
+                "Chunk['|Inst|'][InstLen] = Inst;"
+            ]))}
             `,
-    'InstLen = InstLen + 1;',
-    'last = nil;',
-  ])}
+            "InstLen = InstLen + 1;",
+            "last = nil;",
+        ])}
     else
         ${createControlFlow([
-    'last = arg',
-  ])}
+            "last = arg",
+        ])}
     end
 elseif (current == '__const__') then
     local IDX;
     ${createControlFlow([
-    "IDX = Chunk['|Const|'][ConstLen - 1];",
-  ])}
+        "IDX = Chunk['|Const|'][ConstLen - 1];",
+    ])}
     if (arg == nil and type(IDX) == "string") then
         ${createControlFlow([
-    "Chunk['|Const|'][ConstLen - 1] = { XORStringSec(IDX) };",
-  ])}
+            "Chunk['|Const|'][ConstLen - 1] = { XORStringSec(IDX) };",
+        ])}
     elseif (type(arg) == "table" and arg["${ranKey2}"] == true) then
         ${createControlFlow([
-    "Chunk['|Const|'][ConstLen] = arg;",
-    'ConstLen = ConstLen + 1;',
-  ])}
+            "Chunk['|Const|'][ConstLen] = arg;",
+            "ConstLen = ConstLen + 1;",
+        ])}
     elseif (type(arg) == "table") then
         ${createControlFlow([
-    "Chunk['|Const|'][ConstLen] = arg[1] or nil;",
-    'ConstLen = ConstLen + 1;',
-  ])}
+            "Chunk['|Const|'][ConstLen] = arg[1] or nil;",
+            "ConstLen = ConstLen + 1;",
+        ])}
     else
         ${createControlFlow([
-    "Chunk['|Const|'][ConstLen] = arg;",
-    'ConstLen = ConstLen + 1;',
-  ])}
+            "Chunk['|Const|'][ConstLen] = arg;",
+            "ConstLen = ConstLen + 1;",
+        ])}
     end
 elseif (current == '__proto__') then
     local fix;
@@ -1105,18 +1135,19 @@ elseif (current == '__init__') then
     end
 end
 return self;
-end;`,
-    ];
+end;`
+            ]
 
-    print('adding metamethods');
-    Metamethods = shuffleArray(Metamethods);
-    s += Metamethods[0];
-    s += Metamethods[1];
+        print("adding metamethods")
+        Metamethods = shuffleArray(Metamethods)
+        s += Metamethods[0]
+        s += Metamethods[1]
 
-    s += '};';
-
-    print('creating main loop');
-    let runStr = `local function Run(_, ...)
+        
+        s += `};`
+        
+        print("creating main loop")
+        let runStr = `local function Run(_, ...)
         if (isClosure ~= true and ran) then
             return error('Already ran (2)!')
         else
@@ -1156,89 +1187,92 @@ end;`,
             local ChunkConst = Chunk['|Const|'];
             while true do
                 local ${shuffleArray([
-    'Inst', 'OP_CODE', 'a', 'b', 'c',
-  ]).join(', ')};
+                    "Inst", "OP_CODE", "a", "b", "c"
+                ]).join(', ')};
                 Inst = Chunk['|Inst|'][pc];
                 ${shuffleArray([
-    "OP_CODE = Inst['|Opcode|'];",
-    // "a = |A|;",
-    // "b = |B|;",
-    // "c = |C| or nil;",
-    'pc = pc + 1',
-  ]).join('\n')}
+                    "OP_CODE = Inst['|Opcode|'];",
+                    //"a = |A|;",
+                    //"b = |B|;",
+                    //"c = |C| or nil;",
+                    "pc = pc + 1"
+                ]).join('\n')}
   
                 -- fat trash debug
                 local t = tostring;
                 --print(("IGNORE:[%s]\t%s\t|\t%s\t:\t%s\t:\t%s"):format(t(pc - 1), t(enum), t(a), t(b), t(c)));
-        `;
+        `
+                
+                print("creating fake opcodes")
+                let fakeOpcodes = settings.Debug === true ? 0 : Math.floor((Object.keys(tree.Chunk.UsedInstructions).length + 2) / 1.2)
+                let fakeLines = [
+                    // Xor shit
+                    "Stack[|A|] = xorStr(Chunk['|Const|'][|B|], xorPrimaryKey);",
+                    "Chunk['|Const|'][i] = xorStr(v[1], xorPrimaryKey)",
+                    "for i,v in pairs(Chunk['|Const|']) do if (type(v) == 'table' and type(v[1]) == 'string') then Chunk['|Const|'][i] = xorStr(v[1], xorPrimaryKey) end end;",
+                    "Stack[|A|] = Env[XORStringPrim(Chunk['|Const|'][|B|])];",
+                    "Stack[|A|] = XORStringPrim(Chunk['|Const|'][|B|]);",
+                    "Env[XORStringPrim(Chunk['|Const|'][|B|])] = Stack[|A|];",
 
-    print('creating fake opcodes');
-    const fakeOpcodes = settings.Debug === true ? 0 : Math.floor((Object.keys(tree.Chunk.UsedInstructions).length + 2) / 1.2);
-    const fakeLines = [
-      // Xor shit
-      "Stack[|A|] = xorStr(Chunk['|Const|'][|B|], xorPrimaryKey);",
-      "Chunk['|Const|'][i] = xorStr(v[1], xorPrimaryKey)",
-      "for i,v in pairs(Chunk['|Const|']) do if (type(v) == 'table' and type(v[1]) == 'string') then Chunk['|Const|'][i] = xorStr(v[1], xorPrimaryKey) end end;",
-      "Stack[|A|] = Env[XORStringPrim(Chunk['|Const|'][|B|])];",
-      "Stack[|A|] = XORStringPrim(Chunk['|Const|'][|B|]);",
-      "Env[XORStringPrim(Chunk['|Const|'][|B|])] = Stack[|A|];",
+                    // Really shit shit
+                    "Inst[5] = Chunk['|Const|'][Inst[5]];",
+                    "local Upvalues = Chunk['|Const|'][|A| + |C|]; Stack[|A|]	= Upvalues[|B|];",
+                    "Stack[|A|] = Env[Chunk['|Const|'][|B|]](|INST_LOAD_VAR|);",
+                    "Env[Chunk['|Const|'][|B|]]	= Stack[|A|];",
+                    "Stack[|A|]	= { sub((|INST_LOAD_VAR|), 1, Stack[|B|]) };",
+                    "_Returns(Stack[|A|](unpack(args, 1, limit - |A|, (|INST_LOAD_VAR|))));",
+                    "do return Stack[|C|] end",
+                    "for i = Stack[|B|], Stack[|A|] do Stack[|C|] = Stack[|C|] .. Stack[Chunk['|Const|']][i] end;",
+                    "if (_Returns(Stack[|A|]) == |INST_LOAD_VAR|) then Chunk['|Opcode|'] = (function(a) return a ^ '__const__' end)('__init__'); end; do InstrPoint = InstrPoint + 1 end",
+                    "InstrPoint = InstrPoint - 1;",
+                    "local Stk = Stack;local B = |B|;local K = Stk[B];for Idx = B + 1, |C| do K = K .. Stk[Idx]; end;Stack[|A|] = K; Stack[|B|] = |INST_LOAD_VAR|;",
+                    "Stack = |B| % Stack[|B|] * |A|;",
+                    "InstrPoint = InstrPoint - 1 * (Chunk['|Inst|']); Chunk['|Opcode|']((function(a) return a ^ '__const__' end)('__init__'));",
+                    "Chunk['|Const|'] = |B| / { [|A|] = '__value__', [|C|] = |INST_LOAD_VAR| };",
+                    "|INST_LOAD_VAR| = sub(Chunk[Stack[|A|]], Stack[|B|], Stack[|C|])"
+        
+                ]
+                
 
-      // Really shit shit
-      "Inst[5] = Chunk['|Const|'][Inst[5]];",
-      "local Upvalues = Chunk['|Const|'][|A| + |C|]; Stack[|A|]	= Upvalues[|B|];",
-      "Stack[|A|] = Env[Chunk['|Const|'][|B|]](|INST_LOAD_VAR|);",
-      "Env[Chunk['|Const|'][|B|]]	= Stack[|A|];",
-      'Stack[|A|]	= { sub((|INST_LOAD_VAR|), 1, Stack[|B|]) };',
-      '_Returns(Stack[|A|](unpack(args, 1, limit - |A|, (|INST_LOAD_VAR|))));',
-      'do return Stack[|C|] end',
-      "for i = Stack[|B|], Stack[|A|] do Stack[|C|] = Stack[|C|] .. Stack[Chunk['|Const|']][i] end;",
-      "if (_Returns(Stack[|A|]) == |INST_LOAD_VAR|) then Chunk['|Opcode|'] = (function(a) return a ^ '__const__' end)('__init__'); end; do InstrPoint = InstrPoint + 1 end",
-      'InstrPoint = InstrPoint - 1;',
-      'local Stk = Stack;local B = |B|;local K = Stk[B];for Idx = B + 1, |C| do K = K .. Stk[Idx]; end;Stack[|A|] = K; Stack[|B|] = |INST_LOAD_VAR|;',
-      'Stack = |B| % Stack[|B|] * |A|;',
-      "InstrPoint = InstrPoint - 1 * (Chunk['|Inst|']); Chunk['|Opcode|']((function(a) return a ^ '__const__' end)('__init__'));",
-      "Chunk['|Const|'] = |B| / { [|A|] = '__value__', [|C|] = |INST_LOAD_VAR| };",
-      '|INST_LOAD_VAR| = sub(Chunk[Stack[|A|]], Stack[|B|], Stack[|C|])',
+                let fastFakeLines = [ ]
 
-    ];
+                let fakeCode = []
+                for (let i = 0; i < 20; i++) {
+                    let s = []
+                    let f = Math.floor(Math.random() * 9 + 5)
+                    for (let i = 0; i < f; i += 2) {
+                        s.push(`\n${shuffleArray(fakeLines)[0]}`)
+                    }
+                    let f2 = Math.floor(Math.random() * 9 + 3)
+                    if (fastFakeLines[0] !== null && fastFakeLines[0] !== undefined)
+                        for (let i = 0; i < f2; i += 2)
+                            s.push(`\n${shuffleArray(fastFakeLines)[0]}`)
+                    fakeCode.push(s.join('\n'))//settings.Debug === true ? s.join('\n') : createControlFlow(s))
+                }
+        
+                print("finiding used instructions")
+                let usedOpcodes = []
+                for (let opcode in tree.Chunk.UsedInstructions) {
+                    usedOpcodes.push( tree.Opmap[isFinite(opcode) ? parseInt(opcode, 10) : opcode ])
+                }
 
-    const fastFakeLines = [];
-
-    const fakeCode = [];
-    for (let i = 0; i < 20; i++) {
-      const s = [];
-      const f = Math.floor(Math.random() * 9 + 5);
-      for (let i = 0; i < f; i += 2) {
-        s.push(`\n${shuffleArray(fakeLines)[0]}`);
-      }
-      const f2 = Math.floor(Math.random() * 9 + 3);
-      if (fastFakeLines[0] !== null && fastFakeLines[0] !== undefined) for (let i = 0; i < f2; i += 2) s.push(`\n${shuffleArray(fastFakeLines)[0]}`);
-      fakeCode.push(s.join('\n'));// settings.Debug === true ? s.join('\n') : createControlFlow(s))
-    }
-
-    print('finiding used instructions');
-    let usedOpcodes = [];
-    for (const opcode in tree.Chunk.UsedInstructions) {
-      usedOpcodes.push(tree.Opmap[isFinite(opcode) ? parseInt(opcode, 10) : opcode]);
-    }
-
-    // console.log("AY:", tree.Chunk.Virtuals)
-    for (const virtual of tree.Chunk.Virtuals) {
-      usedOpcodes.push(virtual);
-    }
-
-    print('adding fake opcodes to opmap');
-    for (let i = 0; i < fakeOpcodes; i++) {
-      usedOpcodes.push({
-        fake: true,
-        name: `${genUniString(12)}`,
-      });
-    }
-    usedOpcodes = shuffleArray(usedOpcodes);
-
-    print('creating logic and control flow for main loop');
-    runStr += CreateOpcodeStat(usedOpcodes, fakeCode, tree, settings.Debug);
-    runStr += `\nif (pc > (InstLen - 1)) then
+                //console.log("AY:", tree.Chunk.Virtuals)
+                for (let virtual of tree.Chunk.Virtuals) {
+                    usedOpcodes.push(virtual)
+                }
+        
+                print("adding fake opcodes to opmap")
+                for (let i = 0; i < fakeOpcodes; i++) {
+                    usedOpcodes.push({
+                        fake: true,
+                        name: `${genUniString(12)}`
+                    })
+                }
+                usedOpcodes = shuffleArray(usedOpcodes)
+    
+                print("creating logic and control flow for main loop")
+                runStr += CreateOpcodeStat(usedOpcodes, fakeCode, tree, settings.Debug)
+                runStr += `\nif (pc > (InstLen - 1)) then
                         break
                     end
                 end
@@ -1251,107 +1285,116 @@ end;`,
             return
         end;`;
 
-    s += runStr;
+        s += runStr;
 
-    s += '\nreturn setmetatable({}, Metamethods_), Run\nend;';
+        s += `\nreturn setmetatable({}, Metamethods_), Run\nend;`
 
-    print('adding end of wrapper');
-    s += `
+        print("adding end of wrapper")
+        s += `
 local VM, Wrapper = new("${tree.Headers.Signature}", {${tree.Chunk.Const.length}, ${tree.Chunk.Instr.length}}, ${tree.Chunk.Upvals}, gfenv());
 VM.__init__(0, '|Const|', '|Inst|', '|Proto|', ${tree.Chunk.Args})
-        `;
+        `
 
-    print('adding btcode deserializer');
 
-    s += '';
-    // createControlFlow([ ])
+        print("adding btcode deserializer")
+        
 
-    print('creating used constants');
-    const cnstLoadCode = [' local _CONST = VM["__const__"];'];
-    for (const idx in tree.Chunk.Const) {
-      const cnst = tree.Chunk.Const[idx];
-      let code = '';
-      // console.log(typeof cnst, cnst.constructor === Array, cnst)
-      if (typeof cnst === 'object' && cnst !== null && cnst.Encrypted == true && (cnst.Type !== null && cnst.Type !== undefined)) {
-        if (cnst.Type === 'number') code += ` VM({${cnst.Orig}});\n`;
-        else code += ` VM("IGNORE:${toEscStr(xorStrArr(cnst.Data, tree.XORSecondary))}")();\n`;
-      } else if (typeof cnst === 'object' && cnst !== null && cnst !== undefined && cnst.constructor === Array) {
-        code += ` VM("IGNORE:${toEscStr(cnst)}");\n`;
-      } else if (typeof cnst === 'number') {
-        code += ` VM({${cnst}});\n`;
-      } else if (typeof cnst === 'boolean') {
-        code += ` VM(${cnst.toString()});`;
-      } else if (typeof cnst === 'string') {
-        code += ` VM('IGNORE:${toEscStrF(cnst)}');\n`;
-      } else if (cnst === null) {
-        code += ' VM({nil});\n';
-      } else {
-        code += ` VM('IGNORE:${cnst}');\n`;
-      }
-      cnstLoadCode.push(code);
-    }
 
-    print('creating used instructions');
-    const [instLoad_Code, inst_loadSrc] = CreateInstDecoder(tree.Chunk, tree, settings);
-    const instrLoadCode = [
-      instLoad_Code,
-    ];
+        s += ``
+        //createControlFlow([ ])
 
-    print('creating used protos');
-    const protoLoadCode = [' local _PROTO = VM["__proto__"];'];
-    let getProtoLoadCode;
-    getProtoLoadCode = function (proto) {
-      const consts = [];
-      for (const idx in proto.Const) {
-        const cnst = proto.Const[idx];
-        // console.log(typeof cnst, cnst.constructor, cnst)
-        if (typeof cnst === 'object' && cnst !== null && cnst.Encrypted === true && (cnst.Type !== null && cnst.Type !== null && cnst.Type !== undefined)) {
-          if (cnst.Type === 'number') consts.push(`${cnst.Orig}`);
-          else consts.push(`{"IGNORE:${toEscStr(xorStrArr(cnst.Data, tree.XORSecondary))}"}`);
-        } else if (typeof cnst === 'object' && cnst !== null && cnst !== undefined && cnst.constructor === Array) {
-          consts.push(`"IGNORE:${toEscStr(cnst)}"`);
-        } else if (typeof cnst === 'number') {
-          consts.push(`${cnst}`);
-        } else if (typeof cnst === 'boolean') {
-          consts.push(`${cnst}`);
-        } else if (cnst === null || cnst === undefined) {
-          consts.push('nil');
-        } else if (typeof cnst === 'string') {
-          consts.push(`'IGNORE:${toEscStrF(cnst)}'`);
-        } else {
-          consts.push(`'${cnst}'`);
+
+        print("creating used constants")
+        let cnstLoadCode = [ ` local _CONST = VM["__const__"];` ]
+        for (let idx in tree.Chunk.Const) {
+            let cnst = tree.Chunk.Const[idx]
+            let code = ''
+            //console.log(typeof cnst, cnst.constructor === Array, cnst)
+            if (typeof cnst === 'object' && cnst !== null && cnst.Encrypted == true && (cnst.Type !== null && cnst.Type !== undefined)) {
+                if (cnst.Type === 'number')
+                    code += ` VM({${cnst.Orig}});\n`;
+                else
+                    code += ` VM("IGNORE:${toEscStr( xorStrArr( cnst.Data, tree.XORSecondary ) )}")();\n`;
+            } else if(typeof cnst === 'object' && cnst !== null && cnst !== undefined && cnst.constructor === Array) {
+                code += ` VM("IGNORE:${toEscStr(cnst)}");\n`;
+            } else if(typeof cnst === 'number') {
+                code += ` VM({${cnst}});\n`;
+            } else if(typeof cnst === 'boolean') {
+                code += ` VM(${cnst.toString()});`
+            } else if(typeof cnst === 'string') {
+                code += ` VM('IGNORE:${toEscStrF(cnst)}');\n`
+            } else if(cnst === null) {
+                code += ` VM({nil});\n`
+            } else {
+                code += ` VM('IGNORE:${cnst}');\n`
+            }
+            cnstLoadCode.push(code)
         }
-      }
 
-      const instructs = [];
-      for (const idx in proto.Instr) {
-        const inst = proto.Instr[idx];
-        instructs.push(`{ ['|Opcode|'] = "${inst.Enum}", ${inst['1'] !== null ? inst['1'] : 0}, ${inst['2'] !== null ? inst['2'] : 0}, ${inst['3'] !== null ? `${inst['3']} ,` : ''} ["__value__"] = ${inst.Value} }`);
-      }
+        print("creating used instructions")
+        let [ instLoad_Code, inst_loadSrc ] = CreateInstDecoder(tree.Chunk, tree, settings)
+        let instrLoadCode = [
+            instLoad_Code
+        ]
 
-      const protos = [];
-      for (const idx in proto.Proto) {
-        const pr = proto.Proto[idx];
-        protos.push(getProtoLoadCode(pr));
-      }
+        print("creating used protos")
+        let protoLoadCode = [ ` local _PROTO = VM["__proto__"];`]
+        let getProtoLoadCode
+        getProtoLoadCode = function(proto) {
+            let consts = []
+            for (let idx in proto.Const) {
+                let cnst = proto.Const[idx]
+                //console.log(typeof cnst, cnst.constructor, cnst)
+                if (typeof cnst === 'object' && cnst !== null && cnst.Encrypted === true && (cnst.Type !== null && cnst.Type !== null && cnst.Type !== undefined)) {
+                    if (cnst.Type === 'number')
+                        consts.push(`${cnst.Orig}`);
+                    else
+                        consts.push(`{"IGNORE:${toEscStr( xorStrArr( cnst.Data, tree.XORSecondary ) )}"}`);
+                } else if(typeof cnst === 'object' && cnst !== null && cnst !== undefined && cnst.constructor === Array) {
+                    consts.push(`"IGNORE:${toEscStr(cnst)}"`);
+                } else if(typeof cnst === 'number') {
+                    consts.push(`${cnst}`);
+                } else if(typeof cnst === 'boolean') {
+                    consts.push(`${cnst}`);
+                } else if(cnst === null || cnst === undefined) {
+                    consts.push(`nil`);
+                } else if(typeof cnst === 'string') {
+                    consts.push(`'IGNORE:${toEscStrF( cnst )}'`);
+                } else {
+                    consts.push(`'${cnst}'`);
+                }
+            }
 
-      return `{
+            let instructs = []
+            for (let idx in proto.Instr) {
+                let inst = proto.Instr[idx]
+                instructs.push(`{ ['|Opcode|'] = "${inst.Enum}", ${inst['1'] !== null ? inst['1'] : 0}, ${inst['2'] !== null ? inst['2'] : 0}, ${inst['3'] !== null ? `${inst['3']} ,` : ''} ["__value__"] = ${inst.Value} }`)
+            }
+
+            let protos = []
+            for (let idx in proto.Proto) {
+                let pr = proto.Proto[idx]
+                protos.push(getProtoLoadCode(pr))
+            }
+
+            return `{
                 ["|Const|"] = { ${consts.join(',\n')} },
                 ["|Inst|"] = { ${instructs.join(',\n')} },
                 ["|Proto|"] = { ${protos.join(';\n')} },
                 ["|T_UPVALS|"] = ${proto.Upvals},
                 ["|Args|"] = ${proto.Args}
-            }`;
-    };
+            }`
+        }
 
-    for (const idx in tree.Chunk.Proto) {
-      const proto = tree.Chunk.Proto[idx];
-      const str = getProtoLoadCode(proto);
-      protoLoadCode.push(`VM (${str})`);
-    }
 
-    print('adding consts, insts, & protos');
-    let cnstLoadSrc = cnstLoadCode.join('\n');/* settings.Debug === true ? cnstLoadCode.join('\n') : (() => {
+        for (let idx in tree.Chunk.Proto) {
+            let proto = tree.Chunk.Proto[idx]
+            let str = getProtoLoadCode(proto)
+            protoLoadCode.push(`VM (${str})`)
+        }
+
+        print("adding consts, insts, & protos")
+        let cnstLoadSrc = cnstLoadCode.join('\n')/* settings.Debug === true ? cnstLoadCode.join('\n') : (() => {
             let str = ''
             while (cnstLoadCode.length !== 0) {
                 let co = []
@@ -1366,9 +1409,9 @@ VM.__init__(0, '|Const|', '|Inst|', '|Proto|', ${tree.Chunk.Args})
                 str += `\ndo\n${createControlFlow(co)}\nend;`
             }
             return str
-        })();/* */
-    cnstLoadSrc = `\ndo\n${cnstLoadSrc}\nend;`;
-    let instrLoadSrc = instrLoadCode.join('\n');/* settings.Debug === true ? instrLoadCode.join('\n') :(() => {
+        })();/**/
+        cnstLoadSrc = `\ndo\n${cnstLoadSrc}\nend;`
+        let instrLoadSrc = instrLoadCode.join('\n')/* settings.Debug === true ? instrLoadCode.join('\n') :(() => {
             let str = ''
             while (instrLoadCode.length !== 0) {
                 let co = []
@@ -1383,9 +1426,9 @@ VM.__init__(0, '|Const|', '|Inst|', '|Proto|', ${tree.Chunk.Args})
                 str += `\ndo\n${createControlFlow(co)}\nend;`
             }
             return str
-        })();/* */
-    instrLoadSrc = `\ndo\n${instrLoadSrc}\nend;`;
-    let protoLoadSrc = protoLoadCode.join('\n');/* settings.Debug === true ? protoLoadCode.join('\n') : (() => {
+        })();/**/
+        instrLoadSrc = `\ndo\n${instrLoadSrc}\nend;`
+        let protoLoadSrc = protoLoadCode.join('\n')/* settings.Debug === true ? protoLoadCode.join('\n') : (() => {
             let str = ''
             while (protoLoadCode.length !== 0) {
                 let co = []
@@ -1400,25 +1443,25 @@ VM.__init__(0, '|Const|', '|Inst|', '|Proto|', ${tree.Chunk.Args})
                 str += `\ndo\n${createControlFlow(co)}\nend;`
             }
             return str
-        })();/* */
-    protoLoadSrc = `\ndo\n${protoLoadSrc}\nend;`;
+        })();/**/
+        protoLoadSrc = `\ndo\n${protoLoadSrc}\nend;`
 
-    if (Math.random() > 0.5) {
-      s += cnstLoadSrc;
-      s += instrLoadSrc;
-      s += protoLoadSrc;
-    } else {
-      s += instrLoadSrc;
-      s += cnstLoadSrc;
-      s += protoLoadSrc;
-    }
+        if (Math.random() > 0.5) {
+            s += cnstLoadSrc
+            s += instrLoadSrc
+            s += protoLoadSrc
+        } else {
+            s += instrLoadSrc
+            s += cnstLoadSrc
+            s += protoLoadSrc
+        }
 
-    print('adding end of obfuscator');
-    s += '\nreturn Wrapper(gfenv());'; // Run vm
+        print("adding end of obfuscator")
+        s += `\nreturn Wrapper(gfenv());` // Run vm
 
-    const amountOfArgs = Math.floor((Math.random() * 25) + 20);
-    s = `${watermarkStart}\nreturn (function(__ARG__) 
-            local ${shuffleArray(['Environment', 'watermark', 'amountOfArgs']).join(', ')};
+        let amountOfArgs = Math.floor((Math.random() * 25) + 20);
+        s = `${watermarkStart}\nreturn (function(__ARG__) 
+            local ${shuffleArray([ 'Environment', 'watermark', 'amountOfArgs' ]).join(', ')};
             amountOfArgs = (amountOfArgs or 0);
             for i,v in pairs(__ARG__) do
                 amountOfArgs = (amountOfArgs or 0) + 1
@@ -1429,173 +1472,182 @@ VM.__init__(0, '|Const|', '|Inst|', '|Proto|', ${tree.Chunk.Args})
             end
 
             ${createControlFlow(shuffleArray([
-    'Environment = __ARG__[1];',
-    'watermark = __ARG__[2];',
-  ]))}
+                'Environment = __ARG__[1];',
+                'watermark = __ARG__[2];'
+            ]))}
             ${s}
         end)({
             ${(() => {
-    const a = [
-      '[1] = gfenv();',
-      '[2] = WATERMARK;',
-    ];
-    for (let i = 0; i < (amountOfArgs / 3); i++) a.push(`["IGNORE:${genString(Math.floor((Math.random() * 30) + 2))}"] = "IGNORE:${genString(Math.floor((Math.random() * 20) + 8))}";`);
-    for (let i = 0; i < (amountOfArgs / 3); i++) a.push(`[${Math.random() * 400 + 10}] = "IGNORE:${genString(Math.floor((Math.random() * 20) + 8))}";`);
-    for (let i = 0; i < (amountOfArgs / 3); i++) a.push(`[${Math.random() * 250 + -300}] = "IGNORE:${genString(Math.floor((Math.random() * 20) + 8))}";`);
+                let a = [
+                    '[1] = gfenv();',
+                    '[2] = WATERMARK;',
+                ]
+                for (let i = 0; i < (amountOfArgs / 3); i++)
+                    a.push(`["IGNORE:${genString(Math.floor((Math.random() * 30) + 2))}"] = "IGNORE:${genString(Math.floor((Math.random() * 20) + 8))}";`)
+                for (let i = 0; i < (amountOfArgs / 3); i++)
+                    a.push(`[${Math.random() * 400 + 10}] = "IGNORE:${genString(Math.floor((Math.random() * 20) + 8))}";`)
+                for (let i = 0; i < (amountOfArgs / 3); i++)
+                    a.push(`[${Math.random() * 250 + -300}] = "IGNORE:${genString(Math.floor((Math.random() * 20) + 8))}";`)
+                
 
-    return shuffleArray(a).join('\n');
-  })()}
-        });\n`;
+                return shuffleArray(a).join('\n')
+            })()}
+        });\n`
 
-    print('replacing dynamic variables');
+        print("replacing dynamic variables")
 
-    // s = s.split('|BYTECODE|').join(BytecodeLib.Encoder.dump_tree(tree))
-    s = s.split('|INST_LOAD_VAR|').join(settings.Debug === true ? '__instLoadVar__' : genUniString());
-    s = s.split('|INST_LOAD_SRC|').join(`"IGNORE:${inst_loadSrc}"`);
+        //s = s.split('|BYTECODE|').join(BytecodeLib.Encoder.dump_tree(tree))
+        s = s.split('|INST_LOAD_VAR|').join(settings.Debug === true ? '__instLoadVar__' : genUniString())
+        s = s.split('|INST_LOAD_SRC|').join(`"IGNORE:${inst_loadSrc}"`)
 
-    const instIdx = [];
-    for (let i = 0; i < 3; i++) {
-      let a;
-      do {
-        a = (Math.random() * 10000); // Math.floor
-      } while (instIdx.includes(a));
-      instIdx.push(i + 1);// a)
-    }
-
-    s = s.split('|A|').join(`Inst[${instIdx[0]}]`);
-    s = s.split('|B|').join(`Inst[${instIdx[1]}]`);
-    s = s.split('|C|').join(`Inst[${instIdx[2]}]`);
-    s = s.split('|Bx|').join(`Inst[${instIdx[1]}]`);
-    s = s.split('|sBx|').join(`Inst[${instIdx[1]}]`);
-
-    s = s.split('|AIdx|').join(`${instIdx[0]}`);
-    s = s.split('|BIdx|').join(`${instIdx[1]}`);
-    s = s.split('|CIdx|').join(`${instIdx[2]}`);
-    s = s.split('|BxIdx|').join(`${instIdx[1]}`);
-    s = s.split('|sBxIdx|').join(`${instIdx[1]}`);
-    // |OP_MOVE|
-    // |OP_GETUPVAL|
-    s = s.split('|OP_MOVE|').join(tree.Opmap[opdata.Opnames.indexOf('MOVE')]);
-    s = s.split('|OP_GETUPVAL|').join(tree.Opmap[opdata.Opnames.indexOf('GETUPVAL')]);
-    s = s.split('|OP_CLOSURE|').join(tree.Opmap[opdata.Opnames.indexOf('CLOSURE')]);
-
-    s = s.split('|Inst|').join(settings.Debug === true ? 'inst' : genUniString());
-    s = s.split('|Opcode|').join(settings.Debug === true ? 'opcode' : genUniString());
-    s = s.split('|Const|').join(settings.Debug === true ? 'const' : genUniString());
-    s = s.split('|Proto|').join(settings.Debug === true ? 'proto' : genUniString());
-    s = s.split('__instr__').join(settings.Debug === true ? '__instr__' : genUniString());
-    s = s.split('__const__').join(settings.Debug === true ? '__const__' : genUniString());
-    s = s.split('__init__').join(settings.Debug === true ? '__init__' : genUniString());
-    s = s.split('__value__').join(settings.Debug === true ? '__value__' : genUniString());
-    s = s.split('|Enum|').join(settings.Debug === true ? 'enum' : genUniString());
-    s = s.split('|Value|').join(settings.Debug === true ? 'value' : genUniString());
-    s = s.split('|T_UPVALS|').join(settings.Debug === true ? 't_upvals' : genUniString());
-    s = s.split('|Args|').join(settings.Debug === true ? 'args' : genUniString());
-
-    s = s.split('InstrPoint').join('pc');
-
-    s = s.split('|Signature|').join(tree.Headers.Signature);
-    s = s.split('|Watermark|').join(settings.Watermark);
-    s = s.split('|Base_64_Str|').join(tree.B64Key);
-    s = s.split('OP_CODE').join('enum');
-
-    s = s.split('|WatermarkXORTable|').join(`{${xorStrArr(settings.Watermark, tree.XORSecondary).join(', ')}}`);
-    s = s.split('|WatermarkXORString|').join(`"IGNORE:${toEscStr(xorStrArr(settings.Watermark, tree.XORSecondary))}"`);
-
-    const replaceWords = {
-      Stringbyte: settings.Debug === true ? 'Stringbyte' : genUniString(),
-      Stringsub: settings.Debug === true ? 'Stringsub' : genUniString(),
-
-      ADD: settings.Debug === true ? 'ADD' : genUniString(),
-      SUB: settings.Debug === true ? 'SUB' : genUniString(),
-      MUL: settings.Debug === true ? 'MUL' : genUniString(),
-      DIV: settings.Debug === true ? 'DIV' : genUniString(),
-      MOD: settings.Debug === true ? 'MOD' : genUniString(),
-      POW: settings.Debug === true ? 'POW' : genUniString(),
-
-      EQ: settings.Debug === true ? 'EQ' : genUniString(),
-      LT: settings.Debug === true ? 'LT' : genUniString(),
-      LE: settings.Debug === true ? 'LE' : genUniString(),
-
-      UNM: settings.Debug === true ? 'UNM' : genUniString(),
-      NOT: settings.Debug === true ? 'NOT' : genUniString(),
-      LEN: settings.Debug === true ? 'LEN' : genUniString(),
-
-      CONCATSTRING: settings.Debug === true ? 'CONCATSTRING' : genUniString(),
-      CONCATTABLE: settings.Debug === true ? 'CONCATTABLE' : genUniString(),
-    };
-
-    for (const a of Object.entries(replaceWords)) {
-      // s = s.split(`|${a[0]}|`).join(a[1])
-      // console.log(a)
-    }
-
-    // Replace all strings
-    let tableStr = '';
-    if (settings.CreateConstTable !== false) {
-      print('replacing strings and adding to index table');
-      const indexes = { };
-      let arr = [];
-      s = settings.Debug === true ? s : s.replace(/['"]([\W\w]*?)['"]/gm, (x) => {
-        if (x.match(/^["']IGNORE:/) !== null) return x;
-
-        let name = indexes[x];
-        if (name === undefined || name === null) {
-          do {
-            name = `_${genString(Math.floor(Math.random() * 11) + 5)}`;
-          } while (indexes[name] != undefined);
-          indexes[x] = name;
-          // let delimiter = x.substr(0, 1)
-          const text = x.substr(1, x.length - 2);
-
-          arr.push(
-            `CONST_TABLE[XORStringSec("${toEscStr(xorStrArr(name, tree.XORSecondary))}")] = XORString("${toEscStr(xorStrArr(text, tree.XORSecondary))}", xorSecondaryKey);`,
-          );
+        let instIdx = [ ]
+        for (let i = 0; i < 3; i++) {
+            let a
+            do {
+                a = (Math.random() * 10000) // Math.floor
+            } while (instIdx.includes(a))
+            instIdx.push(i + 1)//a)
         }
 
-        return `(CONST_TABLE.${name})`;
-      });
+        s = s.split('|A|').join(`Inst[${instIdx[0]}]`)
+        s = s.split('|B|').join(`Inst[${instIdx[1]}]`)
+        s = s.split('|C|').join(`Inst[${instIdx[2]}]`)
+        s = s.split('|Bx|').join(`Inst[${instIdx[1]}]`)
+        s = s.split('|sBx|').join(`Inst[${instIdx[1]}]`)
 
-      s = s.split('IGNORE:').join('');
+        s = s.split('|AIdx|').join(`${instIdx[0]}`)
+        s = s.split('|BIdx|').join(`${instIdx[1]}`)
+        s = s.split('|CIdx|').join(`${instIdx[2]}`)
+        s = s.split('|BxIdx|').join(`${instIdx[1]}`)
+        s = s.split('|sBxIdx|').join(`${instIdx[1]}`)
+        // |OP_MOVE|
+        // |OP_GETUPVAL|
+        s = s.split('|OP_MOVE|').join(tree.Opmap[opdata.Opnames.indexOf('MOVE')])
+        s = s.split('|OP_GETUPVAL|').join(tree.Opmap[opdata.Opnames.indexOf('GETUPVAL')])
+        s = s.split('|OP_CLOSURE|').join(tree.Opmap[opdata.Opnames.indexOf('CLOSURE')])
 
-      print('adding strings to const table');
-      // let arr = []
-      /* for (let name in indexes) {
+
+        s = s.split('|Inst|').join(settings.Debug === true ? 'inst' : genUniString())
+        s = s.split('|Opcode|').join(settings.Debug === true ? 'opcode' : genUniString())
+        s = s.split('|Const|').join(settings.Debug === true ? 'const' : genUniString())
+        s = s.split('|Proto|').join(settings.Debug === true ? 'proto' : genUniString())
+        s = s.split('__instr__').join(settings.Debug === true ? '__instr__' : genUniString())
+        s = s.split('__const__').join(settings.Debug === true ? '__const__' : genUniString())
+        s = s.split('__init__').join(settings.Debug === true ? '__init__' : genUniString())
+        s = s.split('__value__').join(settings.Debug === true ? '__value__' : genUniString())
+        s = s.split('|Enum|').join(settings.Debug === true ? 'enum' : genUniString())
+        s = s.split('|Value|').join(settings.Debug === true ? 'value' : genUniString())
+        s = s.split('|T_UPVALS|').join(settings.Debug === true ? 't_upvals' : genUniString())
+        s = s.split('|Args|').join(settings.Debug === true ? 'args' : genUniString())
+        
+        s = s.split('InstrPoint').join('pc')
+
+        s = s.split('|Signature|').join(tree.Headers.Signature)
+        s = s.split('|Watermark|').join(settings.Watermark)
+        s = s.split('|Base_64_Str|').join(tree.B64Key)
+        s = s.split('OP_CODE').join('enum')
+
+        s = s.split('|WatermarkXORTable|').join(`{${xorStrArr(settings.Watermark, tree.XORSecondary).join(', ')}}`)
+        s = s.split('|WatermarkXORString|').join(`"IGNORE:${toEscStr(xorStrArr(settings.Watermark, tree.XORSecondary))}"`)
+    
+
+        let replaceWords = {
+            'Stringbyte': settings.Debug === true ? 'Stringbyte' : genUniString(),
+            'Stringsub': settings.Debug === true ? 'Stringsub' : genUniString(),
+
+            'ADD': settings.Debug === true ? 'ADD' : genUniString(),
+            'SUB': settings.Debug === true ? 'SUB' : genUniString(),
+            'MUL': settings.Debug === true ? 'MUL' : genUniString(),
+            'DIV': settings.Debug === true ? 'DIV' : genUniString(),
+            'MOD': settings.Debug === true ? 'MOD' : genUniString(),
+            'POW': settings.Debug === true ? 'POW' : genUniString(),
+
+            'EQ': settings.Debug === true ? 'EQ' : genUniString(),
+            'LT': settings.Debug === true ? 'LT' : genUniString(),
+            'LE': settings.Debug === true ? 'LE' : genUniString(),
+
+            'UNM': settings.Debug === true ? 'UNM' : genUniString(),
+            'NOT': settings.Debug === true ? 'NOT' : genUniString(),
+            'LEN': settings.Debug === true ? 'LEN' : genUniString(),
+
+            'CONCATSTRING': settings.Debug === true ? 'CONCATSTRING' : genUniString(),
+            'CONCATTABLE': settings.Debug === true ? 'CONCATTABLE' : genUniString()
+        }
+
+        for (let a of Object.entries(replaceWords)) {
+            //s = s.split(`|${a[0]}|`).join(a[1])
+            //console.log(a)
+        }
+
+
+        // Replace all strings
+        let tableStr = ``
+        if (settings.CreateConstTable !== false) {
+            print("replacing strings and adding to index table")
+            let indexes = { }
+            let arr = []
+            s = settings.Debug === true ? s : s.replace(/['"]([\W\w]*?)['"]/gm, (x) => {
+                if (x.match(/^["']IGNORE:/) !== null)
+                    return x;
+
+                let name = indexes[x]
+                if (name === undefined || name === null) {
+                    do {
+                        name = `_${genString(Math.floor(Math.random() * 11) + 5)}`
+                    } while (indexes[name] != undefined)
+                    indexes[x] = name
+                    //let delimiter = x.substr(0, 1)
+                    let text = x.substr(1, x.length - 2)
+                    
+                    arr.push(
+                        `CONST_TABLE[XORStringSec("${toEscStr(xorStrArr(name, tree.XORSecondary))}")] = XORString("${toEscStr(xorStrArr(text, tree.XORSecondary))}", xorSecondaryKey);`
+                    )
+                }
+
+                return `(CONST_TABLE.${name})`
+            })
+
+            s = s.split('IGNORE:').join('')
+
+            print("adding strings to const table")
+            //let arr = []
+            /*for (let name in indexes) {
                 let obj = indexes[name]
                 arr.push(
                     `CONST_TABLE[XORStringSec("${toEscStr(xorStrArr(name, tree.XORSecondary))}")] = XORString("${toEscStr(xorStrArr(text, tree.XORSecondary))}", xorSecondaryKey);`
                 )
-            } */
-      arr = shuffleArray(arr);
+            }*/
+            arr = shuffleArray(arr)
 
-      print('creating constant table');
-      print(`ctablesize: ${arr.length}`);
-      while (arr.length !== 0) {
-        const co = [];
-        for (let i = 0; i < 5000; i++) {
-          const s = arr.shift();
-          if (s != null) {
-            co.push(s);
-          } else {
-            break;
-          }
-        }
-        tableStr += `\ndo\n${true ? co.join('\n') : createControlFlow(co)}\nend;`;
-      }
 
-      tableStr = `
+            print("creating constant table")
+            print("ctablesize: " + arr.length)
+            while (arr.length !== 0) {
+                let co = []
+                for (let i = 0; i < 5000; i++) {
+                    let s = arr.shift()
+                    if (s != null) {
+                        co.push( s )
+                    } else {
+                        break
+                    }
+                }
+                tableStr += `\ndo\n${true ? co.join('\n') :  createControlFlow(co)}\nend;`
+            }
+
+            tableStr = `
             do
                 local setmetatable = gfenv()[XORStringSec("${toEscStr(xorStrArr('setmetatable', tree.XORSecondary))}")];
                 if (setmetatable ~= nil) then -- just incase they got some shit lua version
                     CONST_TABLE[XORStringSec("${toEscStr(xorStrArr(mtIdxStr, tree.XORSecondary))}")] = setmetatable({
-                        ${(function () {
-    const a = [];
-    const l = Math.floor(Math.random() * 5) + 2;
-    for (let i = 0; i < l; i++) {
-      a.push(`[${Math.random() * 500 + -250}] = ${Math.random() * 200 + -100};`);
-    }
-    return a.join('\n');
-  }())}
+                        ${(function() {
+                            let a = []
+                            let l = Math.floor(Math.random() * 5) + 2
+                            for (let i = 0; i < l; i++) {
+                                a.push(`[${Math.random() * 500 + -250}] = ${Math.random() * 200 + -100};`)
+                            }
+                            return a.join('\n')
+                        })()}
                     }, {
                         [XORStringSec("${toEscStr(xorStrArr('__tostring', tree.XORSecondary))}")] = function(a, b)
                             return (function()
@@ -1615,13 +1667,13 @@ VM.__init__(0, '|Const|', '|Inst|', '|Proto|', ${tree.Chunk.Args})
                     CONST_TABLE[1] = CONST_TABLE[constMTableIndex];
                 end;
                 ${tableStr}
-            end;`;
-    } else {
-      s = s.split('IGNORE:').join('');
-    }
-    s = s.split('|ConstantTable|').join(`{ };${tableStr}`);
-    print('returning generated code');
+            end;`
+        } else {
+            s = s.split('IGNORE:').join('')
+        }
+        s = s.split('|ConstantTable|').join(`{ };${tableStr}`)
+        print("returning generated code")
 
-    return s;
-  },
-};
+        return s
+    }
+}

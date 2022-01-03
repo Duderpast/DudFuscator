@@ -1,1 +1,1 @@
-game:Shutdown()
+print("ABC")
