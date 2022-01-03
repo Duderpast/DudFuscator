@@ -1,4 +1,4 @@
-#SFuscator
+# SFuscator
    Паста с Боронида но кого это волнует
    Использование
    Скачиваем [Node.js](https://nodejs.org/en/download/)
