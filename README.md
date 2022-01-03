@@ -1,4 +1,4 @@
-# DudFuscator
+# DudFuscator - Lua Obfuscator
 
 **Паста с Боронида by Duder#1827 но кого это волнует**.
 **Ознакомиться с тем что такое обфускация можно по** [*этой*](https://www.zeluslugi.ru/info-czentr/it-glossary/term-obfuscation) **ссылке**.
