@@ -7,7 +7,7 @@
 
 ### Скачиваем  [**__Node.js__**](https://nodejs.org/en/download/)
 ### Скачиваем [Visual Studio Code](https://code.visualstudio.com/?wt.mc_id=vscom_downloads)
-### Скачиваем [zip архив](https://github.com/Duderpast/DudFuscator/archive/refs/heads/main.zip)
+### Скачиваем [zip-архив](https://github.com/Duderpast/DudFuscator/archive/refs/heads/main.zip)
 ### Запускаем Visual Studio Code
 # Работа с файлами
 ### Разархивируем папку и перетаскиваем её в explorer
