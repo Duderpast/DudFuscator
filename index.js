@@ -10,7 +10,7 @@ let DefaultSettings = {
     'BeautifyDebug': true,
     'PrintStep': false,
     'JIT': false,
-    'Watermark': `discord.discord.discord/`,
+    'Watermark': `7`,
     'Uid': '1',
 
     'AntiTamper': true,
